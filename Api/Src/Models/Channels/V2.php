@@ -9,10 +9,13 @@ class V2 extends Base
 	protected $_isSub=false;
 	protected $_msgs=array();
 
-	public function addMsg($payload)
+	public function addMsg($channel, $payload)
 	{
 		//called only from parent
-		$this->_msgs[]	= $payload;
+		$msgObj				= $this->getMsgObj();
+		$msgObj->payload	= $payload;
+		$msgObj->channel	= $channel;
+		$this->_msgs[]		= $msgObj;
 		return $this;
 	}
 	public function isSubscribed()
@@ -69,9 +72,9 @@ class V2 extends Base
 		}
 		$rMsgs	= array();
 		$i		= 0;
-		foreach($this->_msgs as $mId => $msg) {
+		foreach($this->_msgs as $mId => $msgObj) {
 			$i++;
-			$rMsgs[]	= $msg;
+			$rMsgs[]	= $msgObj;
 			unset($this->_msgs[$mId]);
 			if ($count == $i) {
 				break;

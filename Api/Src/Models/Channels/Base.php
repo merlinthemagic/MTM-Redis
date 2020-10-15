@@ -29,4 +29,11 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	{
 		return preg_quote($this->getName());
 	}
+	protected function getMsgObj()
+	{
+		$msgObj				= new \stdClass();
+		$msgObj->payload	= null;
+		$msgObj->loadTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
+		return $msgObj;
+	}
 }

@@ -10,7 +10,9 @@ class V1 extends Base
 	public function addMsg($payload)
 	{
 		//called only from parent
-		$this->_msgs[]	= $payload;
+		$msgObj				= $this->getMsgObj();
+		$msgObj->payload	= $payload;
+		$this->_msgs[]		= $msgObj;
 		return $this;
 	}
 	public function isSubscribed()
@@ -74,8 +76,8 @@ class V1 extends Base
 				
 				$found	= false;
 				$nMsgs	= array_slice($this->_msgs, $sCount, null, true);
-				foreach (array_reverse($nMsgs, true) as $mId => $msg) {
-					if ($msg == $data) {
+				foreach (array_reverse($nMsgs, true) as $mId => $msgObj) {
+					if ($msgObj->payload == $data) {
 						unset($this->_msgs[$mId]);
 						$found	= true;
 						$subCount--;
@@ -96,19 +98,16 @@ class V1 extends Base
 	}
 	public function getMessages($count=-1, $timeout=1000)
 	{
-		$max	= count($this->_msgs);
-		if ($count < 0 || $max < $count) {
-			$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
-			$max	= count($this->_msgs); //new max count
-		}
+		$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
+		$max	= count($this->_msgs); //max count
 		if ($count < 0 || $count > $max) {
 			$count	= $max; //get all
 		}
 		$rMsgs	= array();
 		$i		= 0;
-		foreach($this->_msgs as $mId => $msg) {
+		foreach($this->_msgs as $mId => $msgObj) {
 			$i++;
-			$rMsgs[]	= $msg;
+			$rMsgs[]	= $msgObj;
 			unset($this->_msgs[$mId]);
 			if ($count == $i) {
 				break;

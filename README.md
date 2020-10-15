@@ -73,14 +73,14 @@ $chanObj->unsubscribe();
 ```
 $maxMsg	= 5; //-1 to get all
 $timeout	= 1000; //ms to wait for atleast one message
-$msgArr	= $chanObj->getMessages($maxMsg, $timeout); //array of messages
+$msgArr	= $chanObj->getMessages($maxMsg, $timeout); //array of message objs
 ```
 
 ### Get one messages from a channel
 
 ```
 $timeout	= 1000; //ms to wait for the message
-$msgStr	= $chanObj->getMessage($timeout); //string message
+$stdObj	= $chanObj->getMessage($timeout); //single message obj
 ```
 
 ### Quit the client

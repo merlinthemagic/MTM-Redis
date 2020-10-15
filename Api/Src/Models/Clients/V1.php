@@ -142,7 +142,7 @@ class V1 extends Base
 		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
 		while(true) {
-			$cTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
+			
 			$data 	= fgets($sockObj);
 			if ($data != "") {
 				$rData	.= $data;
@@ -205,7 +205,7 @@ class V1 extends Base
 	
 							$chanObj	= $this->getChannelByName($pattern, false);
 							if ($chanObj !== null) {
-								$chanObj->addMsg($payload);
+								$chanObj->addMsg($chanName, $payload);
 							}
 							
 						} else {
@@ -215,7 +215,7 @@ class V1 extends Base
 				}
 				return $rData;
 				
-			} elseif ($tTime < $cTime) {
+			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
 				if ($throw === true) {
 					throw new \Exception("Read command timeout");
 				} else {
@@ -288,7 +288,7 @@ class V1 extends Base
 			}
 		}
 		
-		if ($this->_mainSockObj !== null) {		
+		if ($this->_mainSockObj !== null) {
 			$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
 			$this->socketWrite($this->_mainSockObj, $cmdStr);
 			$rData		= $this->mainSocketRead(true);
