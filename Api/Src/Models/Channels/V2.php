@@ -60,13 +60,12 @@ class V2 extends Base
 		}
 		return $this;
 	}
-	public function getMessages($count=-1, $timeout=0)
+	public function getMessages($count=-1, $timeout=1)
 	{
-		$max	= count($this->_msgs);
-		if ($count < 0 || $max < $count) {
+		if ($timeout > 0) {
 			$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
-			$max	= count($this->_msgs); //new max count
 		}
+		$max	= count($this->_msgs); //max count
 		if ($count < 0 || $count > $max) {
 			$count	= $max; //get all
 		}

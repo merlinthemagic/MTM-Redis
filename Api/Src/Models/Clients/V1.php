@@ -266,6 +266,9 @@ class V1 extends Base
 	public function quit()
 	{
 		if ($this->_chSockObj !== null) {
+			//clear the socket, dont convert the data into messages, 
+			//takes forever if lots of messages have been published ignoring dubs
+			$this->socketRead($this->_chSockObj, false, 1);
 			foreach ($this->getChannels() as $chanObj) {
 				try {
 					$this->removeChannel($chanObj);
@@ -288,6 +291,7 @@ class V1 extends Base
 		}
 		
 		if ($this->_mainSockObj !== null) {
+			$this->socketRead($this->_mainSockObj, false, 1); //clear the socket
 			$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
 			$this->socketWrite($this->_mainSockObj, $cmdStr);
 			$rData		= $this->mainSocketRead(true);

@@ -57,7 +57,7 @@ class V1 extends Base
 		}
 		return $this;
 	}
-	public function setMessage($data)
+	public function setMessage($data, $ignoreDub=false)
 	{
 		//there is no requirement the channel be subscribed in order to publish
 		$sCount		= count($this->_msgs);
@@ -68,10 +68,10 @@ class V1 extends Base
 		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
 			
 			$subCount	= intval($raw[1]);
-			//because the message is published using the main socket
-			//if we are subscribed (using the) channel socket we get a copy
-			//lets get rid of that message
-			if ($this->isSubscribed() === true) {
+			if ($ignoreDub === false && $this->isSubscribed() === true) {
+				//because the message is published using the main socket
+				//if we are subscribed (using the channel socket) we get a copy
+				//lets get rid of that message
 				$this->getParent()->chanSocketRead(false);
 				
 				$found	= false;
@@ -96,9 +96,11 @@ class V1 extends Base
 			throw new \Exception("Not handled for return: ".$rData);
 		}
 	}
-	public function getMessages($count=-1, $timeout=0)
+	public function getMessages($count=-1, $timeout=1)
 	{
-		$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
+		if ($timeout > 0) {
+			$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
+		}
 		$max	= count($this->_msgs); //max count
 		if ($count < 0 || $count > $max) {
 			$count	= $max; //get all

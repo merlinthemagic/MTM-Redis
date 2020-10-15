@@ -38,8 +38,9 @@ $chanObj		= $clientObj->addChannel($chanName, false);
 ### Publish a message
 
 ```
-$msgStr	= "myMessage";
-$subCount	= $chanObj->setMessage($msgStr); //returns how many subs got the message
+$ignoreDub		= false; //optional, defaults to false. Allows much faster sending when set to true, but channel gets a copy of its own message
+$msgStr		= "myMessage"; //serialize if not a string
+$subCount		= $chanObj->setMessage($msgStr, $ignoreDub); //returns how many subs got the message
 ```
 
 
