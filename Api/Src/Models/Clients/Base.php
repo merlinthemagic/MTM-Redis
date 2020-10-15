@@ -6,6 +6,7 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 {
 	public function __destruct()
 	{
-		$this->quit();
+		//dont want to throw in shutdown
+		$this->quit(false);
 	}
 }

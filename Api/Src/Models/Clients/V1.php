@@ -243,9 +243,6 @@ class V1 extends Base
 			return $sockRes;
 			
 		} else {
-			//if you get error: Address already in use, know that if the port was in use by another socket
-			//that is now shutdown, it will take a few seconds before the port is available again
-			//but it will be freed up eventually
 			throw new \Exception("Socket Error: " . $errstr, $errno);
 		}
 	}
@@ -263,8 +260,9 @@ class V1 extends Base
 		}
 		return $this->_chSockObj;
 	}
-	public function quit()
+	public function quit($throw=true)
 	{
+		$errObj	= null;
 		if ($this->_chSockObj !== null) {
 			//clear the socket, dont convert the data into messages, 
 			//takes forever if lots of messages have been published ignoring dubs
@@ -273,37 +271,56 @@ class V1 extends Base
 				try {
 					$this->removeChannel($chanObj);
 				} catch (\Exception $e) {
-					
+					if ($errObj === null) {
+						$errObj	= $e;
+					}
 				}
 			}
-			
-			$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
-			$this->socketWrite($this->_chSockObj, $cmdStr);
-			$rData		= $this->chanSocketRead(true);
-			if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-				fclose($this->_chSockObj);
-				$this->_chSockObj	= null;
-			} elseif (strpos($rData, "-ERR") === 0) {
-				throw new \Exception("Error: ".$rData);
-			} else {
-				throw new \Exception("Not handled for return: ".$rData);
+			try {
+				$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
+				$this->socketWrite($this->_chSockObj, $cmdStr);
+				$rData		= $this->chanSocketRead(true);
+				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
+					fclose($this->_chSockObj);
+					$this->_chSockObj	= null;
+				} elseif (strpos($rData, "-ERR") === 0) {
+					throw new \Exception("Error: ".$rData);
+				} else {
+					throw new \Exception("Not handled for return: ".$rData);
+				}
+			} catch (\Exception $e) {
+				if ($errObj === null) {
+					$errObj	= $e;
+				}
 			}
 		}
 		
 		if ($this->_mainSockObj !== null) {
-			$this->socketRead($this->_mainSockObj, false, 1); //clear the socket
-			$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
-			$this->socketWrite($this->_mainSockObj, $cmdStr);
-			$rData		= $this->mainSocketRead(true);
-			if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-				fclose($this->_mainSockObj);
-				$this->_mainSockObj	= null;
-			} elseif (strpos($rData, "-ERR") === 0) {
-				throw new \Exception("Error: ".$rData);
-			} else {
-				throw new \Exception("Not handled for return: ".$rData);
+			try {
+				$this->socketRead($this->_mainSockObj, false, 1); //clear the socket
+				$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
+				$this->socketWrite($this->_mainSockObj, $cmdStr);
+				$rData		= $this->mainSocketRead(true);
+				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
+					fclose($this->_mainSockObj);
+					$this->_mainSockObj	= null;
+				} elseif (strpos($rData, "-ERR") === 0) {
+					throw new \Exception("Error: ".$rData);
+				} else {
+					throw new \Exception("Not handled for return: ".$rData);
+				}
+			} catch (\Exception $e) {
+				if ($errObj === null) {
+					$errObj	= $e;
+				}
 			}
 		}
-		return $this;
+		if ($errObj === null) {
+			return $this;
+		} elseif ($throw === true) {
+			throw $errObj;
+		} else {
+			return $errObj;
+		}
 	}
 }
