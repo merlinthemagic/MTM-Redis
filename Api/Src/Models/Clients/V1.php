@@ -120,13 +120,12 @@ class V1 extends Base
 		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
 		while(true) {
-			$cTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
 			$data 	= fgets($sockObj);
 			if ($data != "") {
 				$rData	.= $data;
 			} elseif ($rData != "") {
 				return $rData;
-			} elseif ($tTime < $cTime) {
+			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
 				if ($throw === true) {
 					throw new \Exception("Read command timeout");
 				} else {

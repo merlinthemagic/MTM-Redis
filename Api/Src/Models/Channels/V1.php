@@ -84,9 +84,9 @@ class V1 extends Base
 						break;
 					}
 				}
-			}
-			if ($found === false) {
-				throw new \Exception("We failed to get a copy of our message even though we are subscribed");
+				if ($found === false) {
+					throw new \Exception("We failed to get a copy of our message even though we are subscribed");
+				}
 			}
 			return $subCount; //number of subscribers the data was delivered to
 			
