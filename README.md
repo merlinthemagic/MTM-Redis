@@ -15,6 +15,14 @@ $connTimeout	= 30;
 $clientObj		= \MTM\RedisApi\Facts::getClients()->getV1($protocol, $host, $port, $auth, $connTimeout);
 ```
 
+### Set client database
+
+```
+$dbId	= 3;
+$clientObj->setDatabase($dbId);
+```
+
+
 ### Get a Channel
 
 Note: getting a channel does not subscribe it. You can publish messages to a channel that is not subscribed

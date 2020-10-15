@@ -24,13 +24,18 @@ class V1 extends Base
 	{
 		return array_values($this->_chanObjs);
 	}
-	public function addChannel($name)
+	public function addChannel($name, $isPattern=false)
 	{
 		if ($this->getChannelByName($name, false) !== null) {
 			throw new \Exception("Channel already exist: ".$name);
 		}
 		//remember to call subscribe()
-		$chObj								= new \MTM\RedisApi\Models\Channels\V1($this, $name);
+		if ($isPattern === false) {
+			$chObj	= new \MTM\RedisApi\Models\Channels\V1($this, $name);
+		} else {
+			$chObj	= new \MTM\RedisApi\Models\Channels\V2($this, $name);
+		}
+		
 		$this->_chanObjs[$chObj->getGuid()]	= $chObj;
 		return $chObj;
 	}
@@ -143,30 +148,69 @@ class V1 extends Base
 				$rData	.= $data;
 			} elseif ($rData != "") {
 				
-				$head	= "*3\r\n$7\r\nmessage\r\n";
-				$hLen	= strlen($head);
-				while(true) {
-					$sPos	= strpos($rData, $head);
-					if ($sPos !== false) {
-						$reData		= $rData;
-						$rData		= substr($rData, 0, $sPos);
-						$reData		= substr($reData, ($sPos + $hLen));
-						$nPos		= strpos($reData, "\r\n");
-						$chanLen	= intval(substr($reData, 1, $nPos));
-						$chanName	= substr($reData, ($nPos + 2), $chanLen);
-						$reData		= substr($reData, ($nPos + $chanLen + 4));
-						
-						$nPos		= strpos($reData, "\r\n");
-						$payLen		= intval(substr($reData, 1, $nPos));
-						$payload	= substr($reData, ($nPos + 2), $payLen);
-						$rData		.= substr($reData, ($nPos + $payLen + 4));
-						$chanObj	= $this->getChannelByName($chanName, false);
-						if ($chanObj !== null) {
-							$chanObj->addMsg($payload);
+				if (strpos($rData, "message\r\n") !== false) {
+					
+					$head	= "*3\r\n$7\r\nmessage\r\n";
+					$hLen	= strlen($head);
+					while(true) {
+						$sPos	= strpos($rData, $head);
+						if ($sPos !== false) {
+							$reData		= $rData;
+							$rData		= substr($rData, 0, $sPos);
+							$reData		= substr($reData, ($sPos + $hLen));
+							
+							$nPos		= strpos($reData, "\r\n");
+							$chanLen	= intval(substr($reData, 1, $nPos));
+							$chanName	= substr($reData, ($nPos + 2), $chanLen);
+							$reData		= substr($reData, ($nPos + $chanLen + 4));
+							
+							$nPos		= strpos($reData, "\r\n");
+							$payLen		= intval(substr($reData, 1, $nPos));
+							$payload	= substr($reData, ($nPos + 2), $payLen);
+							$rData		.= substr($reData, ($nPos + $payLen + 4));
+							
+							$chanObj	= $this->getChannelByName($chanName, false);
+							if ($chanObj !== null) {
+								$chanObj->addMsg($payload);
+							}
+					
+						} else {
+							break;
 						}
-				
-					} else {
-						break;
+					}
+					$head	= "*4\r\n$8\r\npmessage\r\n";
+					$hLen	= strlen($head);
+					while(true) {
+						$sPos	= strpos($rData, $head);
+						if ($sPos !== false) {
+							$reData		= $rData;
+	
+							$rData		= substr($rData, 0, $sPos);
+							$reData		= substr($reData, ($sPos + $hLen));
+							
+							$nPos		= strpos($reData, "\r\n");
+							$patternLen	= intval(substr($reData, 1, $nPos));
+							$pattern	= substr($reData, ($nPos + 2), $patternLen);
+							$reData		= substr($reData, ($nPos + $patternLen + 4));
+							
+							$nPos		= strpos($reData, "\r\n");
+							$chanLen	= intval(substr($reData, 1, $nPos));
+							$chanName	= substr($reData, ($nPos + 2), $chanLen);
+							$reData		= substr($reData, ($nPos + $chanLen + 4));
+							
+							$nPos		= strpos($reData, "\r\n");
+							$payLen		= intval(substr($reData, 1, $nPos));
+							$payload	= substr($reData, ($nPos + 2), $payLen);
+							$rData		.= substr($reData, ($nPos + $payLen + 4));
+	
+							$chanObj	= $this->getChannelByName($pattern, false);
+							if ($chanObj !== null) {
+								$chanObj->addMsg($payload);
+							}
+							
+						} else {
+							break;
+						}
 					}
 				}
 				return $rData;

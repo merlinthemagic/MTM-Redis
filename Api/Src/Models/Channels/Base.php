@@ -25,4 +25,8 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	{
 		return $this->_name;
 	}
+	protected function getRegExName()
+	{
+		return preg_quote($this->getName());
+	}
 }
