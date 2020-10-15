@@ -115,9 +115,8 @@ class V1 extends Base
 		}
 		return $this;
 	}
-	public function mainSocketRead($throw=false, $timeout=5000)
+	public function socketRead($sockObj, $throw=false, $timeout=5000)
 	{
-		$sockObj	= $this->getMainSocket();
 		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
 		while(true) {
@@ -136,93 +135,79 @@ class V1 extends Base
 			}
 		}
 	}
+	public function mainSocketRead($throw=false, $timeout=5000)
+	{
+		return $this->socketRead($this->getMainSocket(), $throw, $timeout);
+	}
 	public function chanSocketRead($throw=false, $timeout=2000)
 	{
-		$sockObj	= $this->getChanSocket();
-		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
-		$rData		= "";
-		while(true) {
+		$rData	= $this->socketRead($this->getChanSocket(), $throw, $timeout);
+		if (strpos($rData, "message\r\n") !== false) {
 			
-			$data 	= fgets($sockObj);
-			if ($data != "") {
-				$rData	.= $data;
-			} elseif ($rData != "") {
-				
-				if (strpos($rData, "message\r\n") !== false) {
+			$head	= "*3\r\n$7\r\nmessage\r\n";
+			$hLen	= strlen($head);
+			while(true) {
+				$sPos	= strpos($rData, $head);
+				if ($sPos !== false) {
+					$reData		= $rData;
+					$rData		= substr($rData, 0, $sPos);
+					$reData		= substr($reData, ($sPos + $hLen));
 					
-					$head	= "*3\r\n$7\r\nmessage\r\n";
-					$hLen	= strlen($head);
-					while(true) {
-						$sPos	= strpos($rData, $head);
-						if ($sPos !== false) {
-							$reData		= $rData;
-							$rData		= substr($rData, 0, $sPos);
-							$reData		= substr($reData, ($sPos + $hLen));
-							
-							$nPos		= strpos($reData, "\r\n");
-							$chanLen	= intval(substr($reData, 1, $nPos));
-							$chanName	= substr($reData, ($nPos + 2), $chanLen);
-							$reData		= substr($reData, ($nPos + $chanLen + 4));
-							
-							$nPos		= strpos($reData, "\r\n");
-							$payLen		= intval(substr($reData, 1, $nPos));
-							$payload	= substr($reData, ($nPos + 2), $payLen);
-							$rData		.= substr($reData, ($nPos + $payLen + 4));
-							
-							$chanObj	= $this->getChannelByName($chanName, false);
-							if ($chanObj !== null) {
-								$chanObj->addMsg($payload);
-							}
+					$nPos		= strpos($reData, "\r\n");
+					$chanLen	= intval(substr($reData, 1, $nPos));
+					$chanName	= substr($reData, ($nPos + 2), $chanLen);
+					$reData		= substr($reData, ($nPos + $chanLen + 4));
 					
-						} else {
-							break;
-						}
+					$nPos		= strpos($reData, "\r\n");
+					$payLen		= intval(substr($reData, 1, $nPos));
+					$payload	= substr($reData, ($nPos + 2), $payLen);
+					$rData		.= substr($reData, ($nPos + $payLen + 4));
+					
+					$chanObj	= $this->getChannelByName($chanName, false);
+					if ($chanObj !== null) {
+						$chanObj->addMsg($payload);
 					}
-					$head	= "*4\r\n$8\r\npmessage\r\n";
-					$hLen	= strlen($head);
-					while(true) {
-						$sPos	= strpos($rData, $head);
-						if ($sPos !== false) {
-							$reData		= $rData;
-	
-							$rData		= substr($rData, 0, $sPos);
-							$reData		= substr($reData, ($sPos + $hLen));
-							
-							$nPos		= strpos($reData, "\r\n");
-							$patternLen	= intval(substr($reData, 1, $nPos));
-							$pattern	= substr($reData, ($nPos + 2), $patternLen);
-							$reData		= substr($reData, ($nPos + $patternLen + 4));
-							
-							$nPos		= strpos($reData, "\r\n");
-							$chanLen	= intval(substr($reData, 1, $nPos));
-							$chanName	= substr($reData, ($nPos + 2), $chanLen);
-							$reData		= substr($reData, ($nPos + $chanLen + 4));
-							
-							$nPos		= strpos($reData, "\r\n");
-							$payLen		= intval(substr($reData, 1, $nPos));
-							$payload	= substr($reData, ($nPos + 2), $payLen);
-							$rData		.= substr($reData, ($nPos + $payLen + 4));
-	
-							$chanObj	= $this->getChannelByName($pattern, false);
-							if ($chanObj !== null) {
-								$chanObj->addMsg($chanName, $payload);
-							}
-							
-						} else {
-							break;
-						}
-					}
-				}
-				return $rData;
-				
-			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
-				if ($throw === true) {
-					throw new \Exception("Read command timeout");
+			
 				} else {
-					return null;
+					break;
+				}
+			}
+			$head	= "*4\r\n$8\r\npmessage\r\n";
+			$hLen	= strlen($head);
+			while(true) {
+				$sPos	= strpos($rData, $head);
+				if ($sPos !== false) {
+					$reData		= $rData;
+
+					$rData		= substr($rData, 0, $sPos);
+					$reData		= substr($reData, ($sPos + $hLen));
+					
+					$nPos		= strpos($reData, "\r\n");
+					$patternLen	= intval(substr($reData, 1, $nPos));
+					$pattern	= substr($reData, ($nPos + 2), $patternLen);
+					$reData		= substr($reData, ($nPos + $patternLen + 4));
+					
+					$nPos		= strpos($reData, "\r\n");
+					$chanLen	= intval(substr($reData, 1, $nPos));
+					$chanName	= substr($reData, ($nPos + 2), $chanLen);
+					$reData		= substr($reData, ($nPos + $chanLen + 4));
+					
+					$nPos		= strpos($reData, "\r\n");
+					$payLen		= intval(substr($reData, 1, $nPos));
+					$payload	= substr($reData, ($nPos + 2), $payLen);
+					$rData		.= substr($reData, ($nPos + $payLen + 4));
+
+					$chanObj	= $this->getChannelByName($pattern, false);
+					if ($chanObj !== null) {
+						$chanObj->addMsg($chanName, $payload);
+					}
+					
+				} else {
+					break;
 				}
 			}
 		}
+		return $rData;
 	}
 	protected function newSocket()
 	{
@@ -241,6 +226,21 @@ class V1 extends Base
 		if (is_resource($sockRes) === true) {
 			stream_set_blocking($sockRes, false);
 			stream_set_chunk_size($sockRes, $this->_chunkSize);
+			
+			if ($this->_authStr != "") {
+				$cmdStr		= "*2\r\n\$4\r\nAUTH\r\n\$".strlen($this->_authStr)."\r\n".$this->_authStr."\r\n";
+				$this->socketWrite($sockRes, $cmdStr);
+				$rData	= $this->socketRead($sockRes, true);
+				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 0) {
+					if (strpos($rData, "-WRONGPASS") === 0) {
+						throw new \Exception("Invalid password: ".$rData);
+					} elseif (strpos($rData, "-ERR") === 0) {
+						throw new \Exception("Error: ".$rData);
+					} else {
+						throw new \Exception("Not handled for return: ".$rData);
+					}
+				}
+			}
 			return $sockRes;
 			
 		} else {

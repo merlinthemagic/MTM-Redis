@@ -96,7 +96,7 @@ class V1 extends Base
 			throw new \Exception("Not handled for return: ".$rData);
 		}
 	}
-	public function getMessages($count=-1, $timeout=1000)
+	public function getMessages($count=-1, $timeout=0)
 	{
 		$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
 		$max	= count($this->_msgs); //max count

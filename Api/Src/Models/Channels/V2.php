@@ -60,7 +60,7 @@ class V2 extends Base
 		}
 		return $this;
 	}
-	public function getMessages($count=-1, $timeout=1000)
+	public function getMessages($count=-1, $timeout=0)
 	{
 		$max	= count($this->_msgs);
 		if ($count < 0 || $max < $count) {
