@@ -1,8 +1,8 @@
 # MTM-Redis
 
-## What is this?
+## What is # MTM-Redis-Api?
 
-Redis using PHP, async pub/sub
+Access Redis using PHP, async pub/sub
 
 ### Get a connection:
 
@@ -10,7 +10,7 @@ Redis using PHP, async pub/sub
 $protocol		= "tcp";
 $host			= "127.0.0.1";
 $port			= 6379;
-$auth			= null;
+$auth			= null; //or the authentication string
 $connTimeout	= 30;
 $clientObj		= \MTM\RedisApi\Facts::getClients()->getV1($protocol, $host, $port, $auth, $connTimeout);
 ```
