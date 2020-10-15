@@ -27,10 +27,11 @@ $clientObj->setDatabase($dbId);
 
 Note: getting a channel does not subscribe it. You can publish messages to a channel that is not subscribed
 
+#### Regular channel
 
 ```
 $chanName		= "myChannel";
-$chanObj		= $clientObj->addChannel($chanName);
+$chanObj		= $clientObj->addChannel($chanName, false);
 
 ```
 
@@ -40,6 +41,17 @@ $chanObj		= $clientObj->addChannel($chanName);
 $msgStr	= "myMessage";
 $subCount	= $chanObj->setMessage($msgStr); //returns how many subs got the message
 ```
+
+
+#### Pattern channel
+
+```
+$pattern		= "*";
+$chanObj		= $clientObj->addChannel($pattern, true);
+
+```
+Note: pattern channels cannot publish messages
+
 
 
 ### Subscribe to a Channel
