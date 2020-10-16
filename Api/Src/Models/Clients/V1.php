@@ -190,7 +190,7 @@ class V1 extends Base
 		//src: https://redis.io/topics/pubsub
 		//A client subscribed to one or more channels should not issue commands, 
 		//although it can subscribe and unsubscribe to and from other channels.
-		//this means channels must have their own dedicated socket
+		//TL;DR this means channels must have their own dedicated socket
 		if ($this->_sslCertObj === null) {
 			$strConn	= $this->_protocol."://".$this->_hostname.":".$this->_portNbr."/";
 		} else {

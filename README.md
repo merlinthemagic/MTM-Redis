@@ -40,10 +40,9 @@ $value		= $dbObj->getValueByKey($key, $throw);
 
 ```
 
-
 ### Get a Channel
 
-Note: getting a channel does not subscribe it. You can publish messages to a channel that is not subscribed
+Note: getting a channel does not subscribe it. This bc you can publish messages to a channel that is not subscribed
 
 #### Regular channel
 
