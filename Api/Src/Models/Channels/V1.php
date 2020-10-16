@@ -23,8 +23,8 @@ class V1 extends Base
 	{
 		if ($this->_isSub === false) {
 			
-			$cmdStr		= "*2\r\n\$9\r\nSUBSCRIBE\r\n\$".strlen($this->getName())."\r\n".$this->getName()."\r\n";
-			$this->getParent()->socketWrite($this->getParent()->getChanSocket(), $cmdStr);
+			$cmdStr		= $this->getParent()->getRawCmd("SUBSCRIBE", array($this->getName()));
+			$this->getParent()->chanSocketWrite($cmdStr);
 
 			$rData		= $this->getParent()->chanSocketRead(true);
 			$regEx		= "/^\*3\r\n\\\$9\r\nSUBSCRIBE\r\n\\\$".strlen($this->getName())."\r\n".$this->getRegExName()."\r\n\:([0-9]+)\r\n$/si";
@@ -42,8 +42,10 @@ class V1 extends Base
 	public function unsubscribe()
 	{
 		if ($this->_isSub === true) {
-			$cmdStr		= "*2\r\n\$11\r\nUNSUBSCRIBE\r\n\$".strlen($this->getName())."\r\n".$this->getName()."\r\n";
-			$this->getParent()->socketWrite($this->getParent()->getChanSocket(), $cmdStr);
+			
+			$cmdStr		= $this->getParent()->getRawCmd("UNSUBSCRIBE", array($this->getName()));
+			$this->getParent()->chanSocketWrite($cmdStr);
+			
 			$rData		= $this->getParent()->chanSocketRead(true);
 			$regEx		= "/^\*3\r\n\\\$11\r\nUNSUBSCRIBE\r\n\\\$".strlen($this->getName())."\r\n".$this->getRegExName()."\r\n\:([0-9]+)\r\n$/si";
 			if (preg_match($regEx, $rData, $raw) === 1) {
@@ -61,8 +63,8 @@ class V1 extends Base
 	{
 		//there is no requirement the channel be subscribed in order to publish
 		$sCount		= count($this->_msgs);
-		$cmdStr		= "*3\r\n\$7\r\nPUBLISH\r\n\$".strlen($this->getName())."\r\n".$this->getName()."\r\n$".strlen($data)."\r\n".$data."\r\n";
-		$this->getParent()->socketWrite($this->getParent()->getMainSocket(), $cmdStr);
+		$cmdStr		= $this->getParent()->getRawCmd("PUBLISH", array($this->getName(), $data));
+		$this->getParent()->mainSocketWrite($cmdStr);
 		
 		$rData		= $this->getParent()->mainSocketRead(true);
 		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {

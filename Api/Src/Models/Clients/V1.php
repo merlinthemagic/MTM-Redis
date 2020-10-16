@@ -4,6 +4,8 @@ namespace MTM\RedisApi\Models\Clients;
 
 class V1 extends Base
 {
+	protected $_phpRedisObj=null;
+	
 	protected $_protocol=null;
 	protected $_hostname=null;
 	protected $_portNbr=null;
@@ -19,48 +21,9 @@ class V1 extends Base
 	protected $_chSockObj=null;
 	protected $_readBuffer="";
 	protected $_chanObjs=array();
+	protected $_streamObjs=array();
+	protected $_dbObjs=array();
 	
-	public function getChannels()
-	{
-		return array_values($this->_chanObjs);
-	}
-	public function addChannel($name, $isPattern=false)
-	{
-		if ($this->getChannelByName($name, false) !== null) {
-			throw new \Exception("Channel already exist: ".$name);
-		}
-		//remember to call subscribe()
-		if ($isPattern === false) {
-			$chObj	= new \MTM\RedisApi\Models\Channels\V1($this, $name);
-		} else {
-			$chObj	= new \MTM\RedisApi\Models\Channels\V2($this, $name);
-		}
-		
-		$this->_chanObjs[$chObj->getGuid()]	= $chObj;
-		return $chObj;
-	}
-	public function removeChannel($chanObj)
-	{
-		if (array_key_exists($chanObj->getGuid(), $this->_chanObjs) === true) {
-			unset($this->_chanObjs[$chanObj->getGuid()]);
-			$chanObj->unsubscribe();
-		} else {
-			throw new \Exception("Channel does not belong to this client");
-		}
-	}
-	public function getChannelByName($name, $throw=false)
-	{
-		foreach ($this->_chanObjs as $chanObj) {
-			if ($chanObj->getName() == $name) {
-				return $chanObj;
-			}
-		}
-		if ($throw === true) {
-			throw new \Exception("Channel not subscribed: ".$name);
-		} else {
-			return null;
-		}
-	}
 	public function setConnection($protocol, $hostname, $portNbr, $auth=null, $timeout=30)
 	{
 		$this->_protocol	= $protocol;
@@ -90,9 +53,7 @@ class V1 extends Base
 				throw new \Exception("Invalid database id");
 			}
 			
-			$cmdStr		= "*2\r\n\$6\r\nSELECT\r\n\$".strlen($id)."\r\n".$id."\r\n";
-			$this->socketWrite($this->getMainSocket(), $cmdStr);
-
+			$this->mainSocketWrite($this->getRawCmd("SELECT", array($id)));
 			$rData		= $this->mainSocketRead(true);
 			if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
 				$this->_dbId	= $id;
@@ -137,6 +98,10 @@ class V1 extends Base
 	public function mainSocketRead($throw=false, $timeout=5000)
 	{
 		return $this->socketRead($this->getMainSocket(), $throw, $timeout);
+	}
+	public function mainSocketWrite($strCmd)
+	{
+		return $this->socketWrite($this->getMainSocket(), $strCmd);
 	}
 	public function chanSocketRead($throw=false, $timeout=2000)
 	{
@@ -208,6 +173,18 @@ class V1 extends Base
 		}
 		return $rData;
 	}
+	public function chanSocketWrite($strCmd)
+	{
+		return $this->socketWrite($this->getChanSocket(), $strCmd);
+	}
+	public function getRawCmd($cmd, $args=array())
+	{
+		$cmdStr		= "*".(1+count($args))."\r\n\$".strlen($cmd)."\r\n".$cmd."\r\n";
+		foreach ($args as $arg) {
+			$cmdStr	.= "\$".strlen($arg)."\r\n".$arg."\r\n";
+		}
+		return $cmdStr;		
+	}
 	protected function newSocket()
 	{
 		//src: https://redis.io/topics/pubsub
@@ -227,8 +204,7 @@ class V1 extends Base
 			stream_set_chunk_size($sockRes, $this->_chunkSize);
 			
 			if ($this->_authStr != "") {
-				$cmdStr		= "*2\r\n\$4\r\nAUTH\r\n\$".strlen($this->_authStr)."\r\n".$this->_authStr."\r\n";
-				$this->socketWrite($sockRes, $cmdStr);
+				$this->socketWrite($sockRes, $this->getRawCmd("AUTH", array($this->_authStr)));
 				$rData	= $this->socketRead($sockRes, true);
 				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 0) {
 					if (strpos($rData, "-WRONGPASS") === 0) {
@@ -249,7 +225,7 @@ class V1 extends Base
 	public function getMainSocket()
 	{
 		if ($this->_mainSockObj === null) {
-			$this->_mainSockObj	= $this->newSocket();
+			$this->_mainSockObj	= $this->newSocket();	
 		}
 		return $this->_mainSockObj;
 	}
@@ -260,9 +236,44 @@ class V1 extends Base
 		}
 		return $this->_chSockObj;
 	}
-	public function quit($throw=true)
+	public function getPhpRedis()
+	{
+		//php Redis functionality will be replaced over time
+		//right now we just want to have non blocking subscriptions
+		if ($this->_phpRedisObj === null) {
+			if (extension_loaded("redis") === false) {
+				//is the extension added under php.ini? extension=/usr/lib64/php/modules/redis.so
+				throw new \Exception("PhpRedis extension not loaded");
+			}
+			$this->_phpRedisObj		= new \Redis();
+			$this->_phpRedisObj->connect($this->_hostname, $this->_portNbr);
+			if ($this->_authStr != "") {
+				$this->_phpRedisObj->auth($this->_authStr);
+			}
+		}
+		return $this->_phpRedisObj;
+	}
+	public function terminate($throw=true)
 	{
 		$errObj	= null;
+		foreach ($this->getDatabases() as $dbObj) {
+			try {
+				$this->removeDatabase($dbObj);
+			} catch (\Exception $e) {
+				if ($errObj === null) {
+					$errObj	= $e;
+				}
+			}
+		}
+		foreach ($this->getStreams() as $streamObj) {
+			try {
+				$this->removeStream($streamObj);
+			} catch (\Exception $e) {
+				if ($errObj === null) {
+					$errObj	= $e;
+				}
+			}
+		}
 		if ($this->_chSockObj !== null) {
 			//clear the socket, dont convert the data into messages, 
 			//takes forever if lots of messages have been published ignoring dubs
@@ -277,8 +288,7 @@ class V1 extends Base
 				}
 			}
 			try {
-				$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
-				$this->socketWrite($this->_chSockObj, $cmdStr);
+				$this->socketWrite($this->_chSockObj, $this->getRawCmd("QUIT"));
 				$rData		= $this->chanSocketRead(true);
 				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
 					fclose($this->_chSockObj);
@@ -294,12 +304,10 @@ class V1 extends Base
 				}
 			}
 		}
-		
 		if ($this->_mainSockObj !== null) {
 			try {
 				$this->socketRead($this->_mainSockObj, false, 1); //clear the socket
-				$cmdStr		= "*1\r\n\$4\r\nQUIT\r\n";
-				$this->socketWrite($this->_mainSockObj, $cmdStr);
+				$this->socketWrite($this->_mainSockObj, $this->getRawCmd("QUIT"));
 				$rData		= $this->mainSocketRead(true);
 				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
 					fclose($this->_mainSockObj);
@@ -321,6 +329,117 @@ class V1 extends Base
 			throw $errObj;
 		} else {
 			return $errObj;
+		}
+	}
+	public function getChannels()
+	{
+		return array_values($this->_chanObjs);
+	}
+	public function addChannel($name, $isPattern=false)
+	{
+		if ($this->getChannelByName($name, false) !== null) {
+			throw new \Exception("Channel already exist: ".$name);
+		}
+		//remember to call subscribe()
+		if ($isPattern === false) {
+			$chObj	= new \MTM\RedisApi\Models\Channels\V1($this, $name);
+		} else {
+			$chObj	= new \MTM\RedisApi\Models\Channels\V2($this, $name);
+		}
+		
+		$this->_chanObjs[$chObj->getGuid()]	= $chObj;
+		return $chObj;
+	}
+	public function removeChannel($chanObj)
+	{
+		if (array_key_exists($chanObj->getGuid(), $this->_chanObjs) === true) {
+			unset($this->_chanObjs[$chanObj->getGuid()]);
+			$chanObj->unsubscribe();
+		} else {
+			throw new \Exception("Channel does not belong to this client");
+		}
+	}
+	public function getChannelByName($name, $throw=false)
+	{
+		foreach ($this->_chanObjs as $chanObj) {
+			if ($chanObj->getName() == $name) {
+				return $chanObj;
+			}
+		}
+		if ($throw === true) {
+			throw new \Exception("Channel does not exist: ".$name);
+		} else {
+			return null;
+		}
+	}
+	public function getStreams()
+	{
+		return array_values($this->_streamObjs);
+	}
+	public function addStream($key)
+	{
+		if ($this->getStreamByKey($key, false) !== null) {
+			throw new \Exception("Stream already exist: ".$key);
+		}
+		$streamObj		= new \MTM\RedisApi\Models\Streams\V1($this, $key);
+		$this->_streamObjs[$streamObj->getGuid()]	= $streamObj;
+		return $streamObj;
+	}
+	public function removeStream($streamObj)
+	{
+		if (array_key_exists($streamObj->getGuid(), $this->_streamObjs) === true) {
+			unset($this->_streamObjs[$streamObj->getGuid()]);
+			$streamObj->terminate();
+		} else {
+			throw new \Exception("Stream does not belong to this client");
+		}
+	}
+	public function getStreamByKey($key, $throw=false)
+	{
+		foreach ($this->_streamObjs as $streamObj) {
+			if ($streamObj->getKey() == $key) {
+				return $streamObj;
+			}
+		}
+		if ($throw === true) {
+			throw new \Exception("Stream key does not exist: ".$key);
+		} else {
+			return null;
+		}
+	}
+	public function getDatabases()
+	{
+		return array_values($this->_dbObjs);
+	}
+	public function addDatabase($id)
+	{
+		if ($this->getDatabaseById($id, false) !== null) {
+			throw new \Exception("Database already exist: ".$id);
+		}
+		$dbObj	= new \MTM\RedisApi\Models\Databases\V1($this, $id);
+		$this->_dbObjs[$dbObj->getGuid()]	= $dbObj;
+		return $dbObj;
+	}
+	public function removeDatabase($dbObj)
+	{
+		if (array_key_exists($dbObj->getGuid(), $this->_dbObjs) === true) {
+			unset($this->_dbObjs[$dbObj->getGuid()]);
+			$dbObj->terminate();
+		} else {
+			throw new \Exception("Database does not belong to this client");
+		}
+	}
+	public function getDatabaseById($id, $throw=false)
+	{
+		foreach ($this->_dbObjs as $dbObj) {
+			if ($dbObj->getId() == $id) {
+				return $dbObj;
+			}
+		}
+		if ($throw === true) {
+			throw new \Exception("Database does not exist: ".$id);
+		} else {
+			return null;
 		}
 	}
 }

@@ -25,10 +25,10 @@ class V2 extends Base
 	public function subscribe()
 	{
 		if ($this->_isSub === false) {
-			
-			$cmdStr		= "*2\r\n\$10\r\nPSUBSCRIBE\r\n\$".strlen($this->getName())."\r\n".$this->getName()."\r\n";
-			$this->getParent()->socketWrite($this->getParent()->getChanSocket(), $cmdStr);
 
+			$cmdStr		= $this->getParent()->getRawCmd("PSUBSCRIBE", array($this->getName()));
+			$this->getParent()->chanSocketWrite($cmdStr);
+			
 			$rData		= $this->getParent()->chanSocketRead(true);
 			$regEx		= "/^\*3\r\n\\\$10\r\nPSUBSCRIBE\r\n\\\$".strlen($this->getName())."\r\n".$this->getRegExName()."\r\n\:([0-9]+)\r\n$/si";
 			if (preg_match($regEx, $rData, $raw) === 1) {
@@ -45,8 +45,10 @@ class V2 extends Base
 	public function unsubscribe()
 	{
 		if ($this->_isSub === true) {
-			$cmdStr		= "*2\r\n\$12\r\nPUNSUBSCRIBE\r\n\$".strlen($this->getName())."\r\n".$this->getName()."\r\n";
-			$this->getParent()->socketWrite($this->getParent()->getChanSocket(), $cmdStr);
+			
+			$cmdStr		= $this->getParent()->getRawCmd("PUNSUBSCRIBE", array($this->getName()));
+			$this->getParent()->chanSocketWrite($cmdStr);
+
 			$rData		= $this->getParent()->chanSocketRead(true);
 			$regEx		= "/^\*3\r\n\\\$12\r\nPUNSUBSCRIBE\r\n\\\$".strlen($this->getName())."\r\n".$this->getRegExName()."\r\n\:([0-9]+)\r\n$/si";
 			if (preg_match($regEx, $rData, $raw) === 1) {

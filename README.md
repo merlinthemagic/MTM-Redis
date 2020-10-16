@@ -15,11 +15,29 @@ $connTimeout	= 30;
 $clientObj		= \MTM\RedisApi\Facts::getClients()->getV1($protocol, $host, $port, $auth, $connTimeout);
 ```
 
-### Set client database
+### Get a database
 
 ```
 $dbId	= 3;
-$clientObj->setDatabase($dbId);
+$dbObj	= $clientObj->getDatabase($dbId);
+```
+
+#### Set a key value
+
+```
+$key		= "myKey";
+$value		= "myStringValue";
+$dbObj->setValueByKey($key, $value);
+
+```
+
+#### Get a key value
+
+```
+$key		= "myKey";
+$throw		= true; //optional, default false. If set true method will throw if key does not exist.
+$value		= $dbObj->getValueByKey($key, $throw);
+
 ```
 
 
