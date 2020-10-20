@@ -11,9 +11,9 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	protected $_isQueued=false;
 	protected $_exObj=null;
 	
-	public function __construct($dbObj)
+	public function __construct($pObj)
 	{
-		$this->_parentObj	= $dbObj;
+		$this->_parentObj	= $pObj;
 		parent::__construct();
 	}
 	public function getParent()

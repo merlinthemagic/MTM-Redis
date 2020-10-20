@@ -6,6 +6,9 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 {
 	protected $_parentObj=null;
 	protected $_name=null;
+	protected $_msgs=array();
+	protected $_isSub=false;
+	protected $_cbs=null;
 	
 	public function __construct($clientObj, $name)
 	{
@@ -25,9 +28,76 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	{
 		return $this->_name;
 	}
-	protected function getRegExName()
+	public function getMessage($timeout=1000)
 	{
-		return preg_quote($this->getName());
+		$rMsgs	= $this->getMessages(1, $timeout);
+		if (count($rMsgs) > 0) {
+			return reset($rMsgs);
+		} else {
+			return null;
+		}
+	}
+	public function getMessages($count=-1, $timeout=1)
+	{
+		if ($timeout > 0) {
+			$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
+		}
+		$max	= count($this->_msgs); //max count
+		if ($count < 0 || $count > $max) {
+			$count	= $max; //get all
+		}
+		$rMsgs	= array();
+		$i		= 0;
+		foreach($this->_msgs as $mId => $msgObj) {
+			$i++;
+			$rMsgs[]	= $msgObj;
+			unset($this->_msgs[$mId]);
+			if ($count == $i) {
+				break;
+			}
+		}
+		return $rMsgs;
+	}
+	public function addCb($obj, $method)
+	{
+		if ($this->_cbs === null) {
+			$this->_cbs	= array();
+		}
+		$this->_cbs[]	= array($obj, $method);
+		return $this;
+	}
+	public function removeCb($obj, $method)
+	{
+		if ($this->_cbs !== null) {
+			foreach ($this->_cbs as $index => $cb) {
+				if (
+					$cb[1] === $method
+					&& $cb[0] === $obj
+				) {
+					unset($this->_cbs[$index]);
+					if (count($this->_cbs) === 0) {
+						$this->_cbs	= null;
+					}
+					break;
+				}
+			}
+		}
+		return $this;
+	}
+	protected function exeCb($msgObj)
+	{
+		if ($this->_cbs !== null) {
+			$params	= array($this, $msgObj);
+			foreach ($this->_cbs as $cb) {
+				try {
+					call_user_func_array($cb, $params);
+				} catch (\Exception $e) {
+					//if you throw we drop you, control yourself!
+					$this->removeCb($cb[0], $cb[1]);
+				}
+			}
+		}
+		return $this;
 	}
 	protected function getMsgObj()
 	{

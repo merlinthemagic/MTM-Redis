@@ -98,16 +98,16 @@ Note: getting a channel does not subscribe it. This bc you can publish messages 
 
 ```
 $chanName		= "myChannel";
-$chanObj		= $clientObj->addChannel($chanName, false);
+$chanObj		= $clientObj->addChannel($chanName);
 
 ```
 
 ### Publish a message
 
 ```
-$ignoreDub		= false; //optional, defaults to false. Allows much faster sending when set to true, but channel gets a copy of its own message
 $msgStr		= "myMessage"; //serialize if not a string
-$subCount		= $chanObj->setMessage($msgStr, $ignoreDub); //returns how many subs got the message
+$throw			= true; //optional, default false. If set true method will throw on publish errors.	
+$subCount		= $chanObj->publish($msgStr)->exec($throw); //returns how many subs got the message
 ```
 
 
@@ -115,7 +115,7 @@ $subCount		= $chanObj->setMessage($msgStr, $ignoreDub); //returns how many subs 
 
 ```
 $pattern		= "*";
-$chanObj		= $clientObj->addChannel($pattern, true);
+$chanObj		= $clientObj->addPatternChannel($pattern);
 
 ```
 Note: pattern channels cannot publish messages
@@ -129,7 +129,7 @@ $chanObj->subscribe();
 
 ```
 
-### Unsubscribe to a Channel
+### Unsubscribe from a Channel
 
 ```
 $chanObj->unsubscribe();
@@ -142,6 +142,7 @@ $chanObj->unsubscribe();
 $maxMsg	= 5; //-1 to get all
 $timeout	= 1000; //ms to wait for atleast one message
 $msgArr	= $chanObj->getMessages($maxMsg, $timeout); //array of message objs
+
 ```
 
 ### Get one messages from a channel
@@ -150,6 +151,19 @@ $msgArr	= $chanObj->getMessages($maxMsg, $timeout); //array of message objs
 $timeout	= 1000; //ms to wait for the message
 $stdObj	= $chanObj->getMessage($timeout); //single message obj
 ```
+
+### Add callback on new message from a channel
+
+```
+$obj		= (object); //instance of some object
+$method	= (string); //name of a public method on the object that takes 2 args ($chanObj, $msgObj)
+$chanObj->addCb($obj, $method); //single message obj
+
+Note: to trigger a poll of all subscribed channel you must periodially call:
+$clientObj->chanSocketRead(false, -1);
+
+```
+
 
 ### Quit the client
 
