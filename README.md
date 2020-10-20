@@ -19,7 +19,7 @@ $clientObj		= \MTM\RedisApi\Facts::getClients()->getV1($protocol, $host, $port, 
 
 ```
 $dbId	= 3;
-$dbObj	= $clientObj->getDatabase($dbId);
+$dbObj	= $clientObj->addDatabase($dbId);
 ```
 
 #### Set a key value
@@ -27,7 +27,8 @@ $dbObj	= $clientObj->getDatabase($dbId);
 ```
 $key		= "myKey";
 $value		= "myStringValue";
-$dbObj->setValueByKey($key, $value);
+$throw		= false; //optional, default false. If set true method will throw on error.
+$dbObj->set($key, $value)->exec($throw);
 
 ```
 
@@ -36,9 +37,58 @@ $dbObj->setValueByKey($key, $value);
 ```
 $key		= "myKey";
 $throw		= true; //optional, default false. If set true method will throw if key does not exist.
-$value		= $dbObj->getValueByKey($key, $throw);
+$value		= $dbObj->get($key)->exec($throw);
 
 ```
+
+#### Delete a key value
+
+```
+$key		= "myKey";
+$throw		= false; //optional, default false. If set true method will throw if key does not exist.
+$dbObj->delete($key)->exec($throw);
+
+```
+
+
+#### Set a key value only if it does not exist
+
+```
+$key		= "myKey";
+$value		= "myStringValue";
+$throw		= true; //optional, default false. If set true method will throw if key exists or on error.
+$dbObj->setNx($key, $value)->exec($throw);
+
+```
+
+#### Watch a key for changes
+
+```
+$key		= "myKey";
+$throw		= false; //optional, default false. If set true method will throw on error.
+$dbObj->watch($key)->exec($throw);
+
+```
+
+#### Transactions
+
+```
+$trsObj	= $dbObj->newTransaction();
+
+$cmdObj	= $dbObj->set("myKey", "myValue");
+$trsObj->addCmd($cmdObj);
+			
+$cmdObj	= $dbObj->get("anotherKey");
+$trsObj->addCmd($cmdObj);
+		
+		
+$throw		= true; //optional, default false. If set true method will throw on transaction errors.	
+$cmdObjs	= $trsObj->exec($throw); //returns commands populated with data
+			
+
+```
+
+
 
 ### Get a Channel
 

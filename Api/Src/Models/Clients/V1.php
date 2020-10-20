@@ -19,7 +19,7 @@ class V1 extends Base
 	protected $_dbId=0;
 	protected $_mainSockObj=null;
 	protected $_chSockObj=null;
-	protected $_readBuffer="";
+	protected $_encoder="none";
 	protected $_chanObjs=array();
 	protected $_streamObjs=array();
 	protected $_dbObjs=array();
@@ -184,6 +184,35 @@ class V1 extends Base
 			$cmdStr	.= "\$".strlen($arg)."\r\n".$arg."\r\n";
 		}
 		return $cmdStr;		
+	}
+	public function setDataEncoder($name)
+	{
+		if (in_array($name, array("php-serializer", "none")) === true) {
+			$this->_encoder	= $name;
+			return $this;
+		} else {
+			throw new \Exception("Invalid encoder: ". $name);
+		}
+	}
+	public function dataEncode($data)
+	{
+		if ($this->_encoder === "none") {
+			return $data;
+		} elseif ($this->_encoder === "php-serializer") {
+			return serialize($data);
+		} else {
+			throw new \Exception("Invalid encoder: ". $this->_encoder);
+		}
+	}
+	public function dataDecode($data)
+	{
+		if ($this->_encoder === "none") {
+			return $data;
+		} elseif ($this->_encoder === "php-serializer") {
+			return unserialize($data);
+		} else {
+			throw new \Exception("Invalid encoder: ". $this->_encoder);
+		}
 	}
 	protected function newSocket()
 	{

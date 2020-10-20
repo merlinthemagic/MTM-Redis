@@ -203,12 +203,10 @@ class V1 extends Base
 		$iObj	= $this->xInfo(false);
 		if ($iObj !== false) {
 			$this->terminate(true);
-			
 			$cmdStr		= $this->getParent()->getRawCmd("DEL", array($this->getKey()));
 			$this->getParent()->mainSocketWrite($cmdStr);
-			
 			$rData		= $this->getParent()->mainSocketRead(true);
-			if (preg_match("/(^\:[0-1]\r\n)$/si", $rData) === 1) {
+			if (preg_match("/^(\:[0-1]\r\n)$/si", $rData) === 1) {
 				return $this; //0-1 because if the stream was deleted between the xInfo and del calls, it returns 0
 			} elseif (strpos($rData, "-ERR") === 0) {
 				throw new \Exception("Error: ".$rData);

@@ -4,39 +4,51 @@ namespace MTM\RedisApi\Models\Databases;
 
 class V1 extends Base
 {
-	public function getValueByKey($key, $throw=false)
+	public function newTransaction()
 	{
-		$this->getParent()->setDatabase($this->getId());
-		
-		$cmdStr		= $this->getParent()->getRawCmd("GET", array($key));
-		$this->getParent()->mainSocketWrite($cmdStr);
-
-		$rData		= $this->getParent()->mainSocketRead(true);
-		$nPos		= strpos($rData, "\r\n");
-		$dLen		= intval(substr($rData, 1, $nPos));
-		if ($dLen > -1) {
-			return substr($rData, ($nPos + 2), $dLen);
-		} elseif ($throw === true) {
-			throw new \Exception("Key does not exist");
-		} else {
-			return null;
-		}
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Multi($this);
+		return $cmdObj;
 	}
-	public function setValueByKey($key, $value)
+	public function watch($key=null)
 	{
-		$this->getParent()->setDatabase($this->getId());
-		
-		$cmdStr		= $this->getParent()->getRawCmd("SET", array($key, $value));
-		$this->getParent()->mainSocketWrite($cmdStr);
-
-		$rData		= $this->getParent()->mainSocketRead(true);
-		if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-			return $this;
-		} elseif (strpos($rData, "-ERR") === 0) {
-			throw new \Exception("Error: ".$rData);
-		} else {
-			throw new \Exception("Not handled for return: ".$rData);
-		}
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Watch($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
+	}
+	public function unwatch()
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Unwatch($this);
+		return $cmdObj;
+	}
+	public function get($key=null)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Get($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
+	}
+	public function set($key=null, $value=null)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Set($this);
+		$cmdObj->setKey($key)->setValue($value);
+		return $cmdObj;
+	}
+	public function append($key, $value)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Append($this);
+		$cmdObj->setKey($key)->setValue($value);
+		return $cmdObj;
+	}
+	public function setNx($key, $value, $throw=false)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetNx($this);
+		$cmdObj->setKey($key)->setValue($value);
+		return $cmdObj;
+	}
+	public function delete($key)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Delete($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
 	}
 	public function terminate($throw=true)
 	{
