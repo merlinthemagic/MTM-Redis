@@ -21,10 +21,8 @@ class V1 extends Base
 
 		$msgObj				= $this->getMsgObj();
 		$msgObj->payload	= $payload;
-		if ($this->_cbs === null) {
+		if ($this->exeCb($msgObj) === false) {
 			$this->_msgs[]		= $msgObj;
-		} else {
-			$this->exeCb($msgObj);
 		}
 		return $this;
 	}

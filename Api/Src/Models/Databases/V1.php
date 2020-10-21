@@ -9,6 +9,17 @@ class V1 extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Multi($this);
 		return $cmdObj;
 	}
+	public function newWatchMulti($watchKeys=array(), $cmdObjs=array())
+	{
+		$wmObj		= new \MTM\RedisApi\Models\Cmds\WatchMulti($this);
+		foreach ($watchKeys as $watchKey) {
+			$wmObj->addWatch($watchKey);
+		}
+		foreach ($cmdObjs as $cmdObj) {
+			$wmObj->addCmd($cmdObj);
+		}
+		return $wmObj;
+	}
 	public function watch($key=null)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Watch($this);
@@ -18,6 +29,12 @@ class V1 extends Base
 	public function unwatch()
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Unwatch($this);
+		return $cmdObj;
+	}
+	public function exists($key=null)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Exists($this);
+		$cmdObj->setKey($key);
 		return $cmdObj;
 	}
 	public function get($key=null)

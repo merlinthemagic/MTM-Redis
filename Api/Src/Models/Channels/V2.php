@@ -12,10 +12,8 @@ class V2 extends Base
 		$msgObj				= $this->getMsgObj();
 		$msgObj->payload	= $payload;
 		$msgObj->channel	= $channel;
-		if ($this->_cbs === null) {
+		if ($this->exeCb($msgObj) === false) {
 			$this->_msgs[]		= $msgObj;
-		} else {
-			$this->exeCb($msgObj);
 		}
 		return $this;
 	}

@@ -22,6 +22,16 @@ $dbId	= 3;
 $dbObj	= $clientObj->addDatabase($dbId);
 ```
 
+#### Key exists
+
+```
+$key		= "myKey";
+$throw		= false; //optional, default false. If set true method will throw on error.
+$dbObj->exists($key)->exec($throw);
+
+```
+
+
 #### Set a key value
 
 ```

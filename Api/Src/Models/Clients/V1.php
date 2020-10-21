@@ -131,6 +131,15 @@ class V1 extends Base
 	{
 		return array_values($this->_dbObjs);
 	}
+	public function getDatabase($id)
+	{
+		//if not exist, add
+		$dbObj	= $this->getDatabaseById($id, false);
+		if ($dbObj === null) {
+			$dbObj	= $this->addDatabase($id);
+		}
+		return $dbObj;
+	}
 	public function addDatabase($id)
 	{
 		if ($this->getDatabaseById($id, false) !== null) {
@@ -250,7 +259,12 @@ class V1 extends Base
 					
 					$chanObj	= $this->getChannelByName($chanName, false);
 					if ($chanObj !== null) {
-						$chanObj->addMsg($this->dataDecode($payload));
+						if (preg_match("/^(__keyevent|__keyspace)\@/", $chanName) === 0) {
+							//TODO: investigate if clients can signal the default serializer used to redis
+							//so all messages are serialized the same, this is not exactly sustainable
+							$payload	= $this->dataDecode($payload);
+						}
+						$chanObj->addMsg($payload);
 					}
 					
 				} else {
@@ -284,7 +298,12 @@ class V1 extends Base
 					
 					$chanObj	= $this->getChannelByName($pattern, false);
 					if ($chanObj !== null) {
-						$chanObj->addMsg($chanName, $this->dataDecode($payload));
+						if (preg_match("/^(__keyevent|__keyspace)\@/", $chanName) === 0) {
+							//TODO: investigate if clients can signal the default serializer used to redis
+							//so all messages are serialized the same, this is not exactly sustainable
+							$payload	= $this->dataDecode($payload);
+						}
+						$chanObj->addMsg($chanName, $payload);
 					}
 					
 				} else {

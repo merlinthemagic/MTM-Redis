@@ -5,12 +5,12 @@ namespace MTM\RedisApi\Models\Cmds;
 class Multi extends Base
 {
 	protected $_baseCmd="MULTI";
-	protected $_queue=array();
+	protected $_cmdObjs=array();
 	
 	public function addCmd($cmdObj)
 	{
 		if ($this->_isExec === false) {
-			$this->_queue[]		= $cmdObj;
+			$this->_cmdObjs[]		= $cmdObj;
 			return $this;
 		} else {
 			throw new \Exception("Cannot add command, transaction is complete");
@@ -28,7 +28,7 @@ class Multi extends Base
 			
 			try {
 
-				foreach ($this->_queue as $cmdObj) {
+				foreach ($this->_cmdObjs as $cmdObj) {
 					if ($cmdObj->isExec() === true) {
 						throw new \Exception("Command already executed: ".$cmdObj->getBaseCmd());
 					} elseif ($cmdObj->isQueued() === true) {
@@ -52,9 +52,9 @@ class Multi extends Base
 					//maybe a watched key was changed
 					throw new \Exception("Transaction failed");
 					
-				} elseif ($qLen === count($this->_queue)) {
+				} elseif ($qLen === count($this->_cmdObjs)) {
 					$rData	= substr($rData, ($nPos+2));
-					foreach ($this->_queue as $cmdObj) {
+					foreach ($this->_cmdObjs as $cmdObj) {
 						
 						$nPos	= strpos($rData, "\r\n");
 						if (strpos($rData, "\$") === 0) {
@@ -77,18 +77,19 @@ class Multi extends Base
 					}
 
 				} else {
-					throw new \Exception("Queue length: ".count($this->_queue)." does not match return data count: ".$qLen);
+					throw new \Exception("Queue length: ".count($this->_cmdObjs)." does not match return data count: ".$qLen);
 				}
 				
-				$this->setResponse($this->_queue);
-				$this->_queue	= null;
+				//replace the response with the populated commands
+				$this->setResponse($this->_cmdObjs);
+				$this->_cmdObjs	= null;
 
 			} catch (\Exception $e) {
-				$this->setException($e);
 				if ($this->_isExec === false) {
 					$this->discard();
 					$this->_isExec	= true;
 				}
+				$this->setException($e);
 			}
 		}
 		return $this->getResponse($throw);
@@ -98,7 +99,7 @@ class Multi extends Base
 		if (preg_match("/^\+(OK)\r\n$/si", $rData, $raw) === 1) {
 			$this->setResponse($raw[1]);
 		} elseif (strpos($rData, "-ERR") === 0) {
-			throw new \Exception("Error: ".$rData);
+			$this->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

@@ -2,11 +2,10 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Cmds;
 
-class SetNx extends Base
+class Exists extends Base
 {
-	protected $_baseCmd="SETNX";
+	protected $_baseCmd="EXISTS";
 	protected $_key=null;
-	protected $_value=null;
 	
 	public function setKey($key)
 	{
@@ -17,24 +16,13 @@ class SetNx extends Base
 	{
 		return $this->_key;
 	}
-	public function setValue($value)
-	{
-		$this->_value		= $value;
-		return $this;
-	}
-	public function getValue()
-	{
-		return $this->_value;
-	}
 	public function getRawCmd()
 	{
-		$data	= $this->getClient()->dataEncode($this->getValue());
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey(), $data));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey()));
 	}
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
-			$this->getClient()->setDatabase($this->getParent()->getId());
 			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
 			$this->_isExec	= true;
 		}
@@ -45,9 +33,9 @@ class SetNx extends Base
 		if (preg_match("/^(\:1\r\n)$/si", $rData) === 1) {
 			$this->setResponse(true);
 		} elseif (preg_match("/(^\:0\r\n)$/si", $rData) === 1) {
-			$this->setResponse(false)->setException(new \Exception("Key exists: ".$this->getKey()));
+			$this->setResponse(false);
 		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
+			$this->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

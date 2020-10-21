@@ -96,8 +96,11 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 					$this->removeCb($cb[0], $cb[1]);
 				}
 			}
+			return true;
+			
+		} else {
+			return false;
 		}
-		return $this;
 	}
 	protected function getMsgObj()
 	{
