@@ -55,15 +55,45 @@ class V1 extends Base
 		$cmdObj->setKey($key)->setValue($value);
 		return $cmdObj;
 	}
-	public function setNx($key, $value, $throw=false)
+	public function setNx($key, $value)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetNx($this);
+		$cmdObj->setKey($key)->setValue($value);
+		return $cmdObj;
+	}
+	public function setDx($key, $value)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetDx($this);
 		$cmdObj->setKey($key)->setValue($value);
 		return $cmdObj;
 	}
 	public function delete($key)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Delete($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
+	}
+	public function expire($key, $secs)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Expire($this);
+		$cmdObj->setKey($key)->setExpire($secs);
+		return $cmdObj;
+	}
+	public function ttl($key)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Ttl($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
+	}
+	public function pExpire($key, $ms)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Pexpire($this);
+		$cmdObj->setKey($key)->setExpire($ms);
+		return $cmdObj;
+	}
+	public function pTtl($key)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Pttl($this);
 		$cmdObj->setKey($key);
 		return $cmdObj;
 	}

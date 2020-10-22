@@ -2,13 +2,11 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Cmds;
 
-//SET if Not eXists
-
-class SetNx extends Base
+class Expire extends Base
 {
-	protected $_baseCmd="SETNX";
+	protected $_baseCmd="EXPIRE";
 	protected $_key=null;
-	protected $_value=null;
+	protected $_secs=null;
 	
 	public function setKey($key)
 	{
@@ -19,19 +17,18 @@ class SetNx extends Base
 	{
 		return $this->_key;
 	}
-	public function setValue($value)
+	public function setExpire($value)
 	{
-		$this->_value		= $value;
+		$this->_secs		= $value;
 		return $this;
 	}
-	public function getValue()
+	public function getExpire()
 	{
-		return $this->_value;
+		return $this->_secs;
 	}
 	public function getRawCmd()
 	{
-		$data	= $this->getClient()->dataEncode($this->getValue());
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey(), $data));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey(), $this->getExpire()));
 	}
 	public function exec($throw=false)
 	{
@@ -47,9 +44,9 @@ class SetNx extends Base
 		if (preg_match("/^(\:1\r\n)$/si", $rData) === 1) {
 			$this->setResponse(true);
 		} elseif (preg_match("/(^\:0\r\n)$/si", $rData) === 1) {
-			$this->setResponse(false)->setException(new \Exception("Key exists: ".$this->getKey()));
+			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey()));
 		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
+			$this->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}
