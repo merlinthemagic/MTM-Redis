@@ -23,6 +23,7 @@ class Ttl extends Base
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
+			$this->getClient()->setDatabase($this->getParent()->getId());
 			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
 			$this->_isExec	= true;
 		}
@@ -30,7 +31,7 @@ class Ttl extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^(\:([0-9]+)\r\n)$/si", $rData, $raw) === 1) {
+		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
 			$this->setResponse(intval($raw[1]));
 		} elseif (preg_match("/(^\:-2\r\n)$/si", $rData) === 1) {
 			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey()));

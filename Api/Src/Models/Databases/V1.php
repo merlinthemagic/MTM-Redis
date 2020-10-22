@@ -49,12 +49,6 @@ class V1 extends Base
 		$cmdObj->setKey($key)->setValue($value);
 		return $cmdObj;
 	}
-	public function append($key, $value)
-	{
-		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Append($this);
-		$cmdObj->setKey($key)->setValue($value);
-		return $cmdObj;
-	}
 	public function setNx($key, $value)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetNx($this);
@@ -64,6 +58,18 @@ class V1 extends Base
 	public function setDx($key, $value)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetDx($this);
+		$cmdObj->setKey($key)->setValue($value);
+		return $cmdObj;
+	}
+	public function setEx($key, $value, $secs)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\SetEx($this);
+		$cmdObj->setKey($key)->setValue($value)->setExpire($secs);
+		return $cmdObj;
+	}
+	public function append($key, $value)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Append($this);
 		$cmdObj->setKey($key)->setValue($value);
 		return $cmdObj;
 	}
