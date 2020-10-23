@@ -23,7 +23,8 @@ class Exists extends Base
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
-			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
+			$this->getClient()->setDatabase($this->getParent()->getId());
+			$this->parse($this->getClient()->getMainSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);

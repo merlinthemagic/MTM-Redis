@@ -47,7 +47,7 @@ class SetEx extends Base
 	{
 		if ($this->_isExec === false) {
 			$this->getClient()->setDatabase($this->getParent()->getId());
-			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
+			$this->parse($this->getClient()->getMainSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);

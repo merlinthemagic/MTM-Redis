@@ -19,6 +19,7 @@ class V1 extends Base
 	protected $_dbId=0;
 	protected $_mainSockObj=null;
 	protected $_chSockObj=null;
+	protected $_trackSockObj=null;
 	protected $_encoder="none";
 	protected $_chanObjs=array();
 	protected $_streamObjs=array();
@@ -174,64 +175,18 @@ class V1 extends Base
 	public function setDatabase($id)
 	{
 		if ($this->_dbId !== $id) {
-			if (is_int($id) === false) {
-				throw new \Exception("Invalid database id");
-			}
 			
-			$this->mainSocketWrite($this->getRawCmd("SELECT", array($id)));
-			$rData		= $this->mainSocketRead(true);
-			if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-				$this->_dbId	= $id;
-				return $this;
-			} elseif (strpos($rData, "-ERR") === 0) {
-				throw new \Exception("Error: ".$rData);
-			} else {
-				throw new \Exception("Not handled for return: ".$rData);
-			}
+			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Select($this);
+			$cmdObj->setId($id)->exec(true);
+			
+			$this->_dbId	= $id;
+			return $this;
 		}
-	}
-	public function socketWrite($sockObj, $strCmd)
-	{
-		$cmdParts	= str_split($strCmd, $this->_chunkSize);
-		foreach ($cmdParts as $cmdPart) {
-			$written	= fwrite($sockObj, $cmdPart);
-			if (strlen($cmdPart) != $written) {
-				throw new \Exception("Failed to write command");
-			}
-		}
-		return $this;
-	}
-	public function socketRead($sockObj, $throw=false, $timeout=5000)
-	{
-		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
-		$rData		= "";
-		while(true) {
-			$data 	= fgets($sockObj);
-			if ($data != "") {
-				$rData	.= $data;
-			} elseif ($rData != "") {
-				return $rData;
-			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
-				if ($throw === true) {
-					throw new \Exception("Read command timeout");
-				} else {
-					return null;
-				}
-			}
-		}
-	}
-	public function mainSocketRead($throw=false, $timeout=5000)
-	{
-		return $this->socketRead($this->getMainSocket(), $throw, $timeout);
-	}
-	public function mainSocketWrite($strCmd)
-	{
-		return $this->socketWrite($this->getMainSocket(), $strCmd);
 	}
 	public function chanSocketRead($throw=false, $timeout=5000)
 	{
 		$sTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
-		$rData	= $this->socketRead($this->getChanSocket(), $throw, $timeout);
+		$rData	= $this->getChanSocket()->read($throw, $timeout);
 		$eTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
 		$rTime	= $timeout - (($eTime - $sTime) * 1000);
 
@@ -320,10 +275,6 @@ class V1 extends Base
 			return $rData;
 		}
 	}
-	public function chanSocketWrite($strCmd)
-	{
-		return $this->socketWrite($this->getChanSocket(), $strCmd);
-	}
 	public function getRawCmd($cmd, $args=array())
 	{
 		$cmdStr		= "*".(1+count($args))."\r\n\$".strlen($cmd)."\r\n".$cmd."\r\n";
@@ -361,56 +312,29 @@ class V1 extends Base
 			throw new \Exception("Invalid encoder: ". $this->_encoder);
 		}
 	}
-	protected function newSocket()
-	{
-		//src: https://redis.io/topics/pubsub
-		//A client subscribed to one or more channels should not issue commands,
-		//although it can subscribe and unsubscribe to and from other channels.
-		//TL;DR this means channels must have their own dedicated socket
-		if ($this->_sslCertObj === null) {
-			$strConn	= $this->_protocol."://".$this->_hostname.":".$this->_portNbr."/";
-		} else {
-			//steal logic from wsSocket client
-			throw new \Exception("Not yet handled for tls");
-		}
-		
-		$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $this->_timeout, STREAM_CLIENT_CONNECT);
-		if (is_resource($sockRes) === true) {
-			stream_set_blocking($sockRes, false);
-			stream_set_chunk_size($sockRes, $this->_chunkSize);
-			
-			if ($this->_authStr != "") {
-				$this->socketWrite($sockRes, $this->getRawCmd("AUTH", array($this->_authStr)));
-				$rData	= $this->socketRead($sockRes, true);
-				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 0) {
-					if (strpos($rData, "-WRONGPASS") === 0) {
-						throw new \Exception("Invalid password: ".$rData);
-					} elseif (strpos($rData, "-ERR") === 0) {
-						throw new \Exception("Error: ".$rData);
-					} else {
-						throw new \Exception("Not handled for return: ".$rData);
-					}
-				}
-			}
-			return $sockRes;
-			
-		} else {
-			throw new \Exception("Socket Error: " . $errstr, $errno);
-		}
-	}
 	public function getMainSocket()
 	{
 		if ($this->_mainSockObj === null) {
-			$this->_mainSockObj	= $this->newSocket();
+			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1($this);
+			$this->_mainSockObj	= $sockObj->initialize();
 		}
 		return $this->_mainSockObj;
 	}
 	public function getChanSocket()
 	{
 		if ($this->_chSockObj === null) {
-			$this->_chSockObj	= $this->newSocket();
+			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1($this);
+			$this->_chSockObj	= $sockObj->initialize();
 		}
 		return $this->_chSockObj;
+	}
+	public function getTrackSocket()
+	{
+		if ($this->_trackSockObj === null) {
+			$sockObj				= new \MTM\RedisApi\Models\Sockets\V1($this);
+			$this->_trackSockObj	= $sockObj->initialize();
+		}
+		return $this->_trackSockObj;
 	}
 	public function getPhpRedis()
 	{
@@ -450,55 +374,18 @@ class V1 extends Base
 				}
 			}
 		}
-		if ($this->_chSockObj !== null) {
-			//clear the socket, dont convert the data into messages,
-			//takes forever if lots of messages have been published ignoring dubs
-			$this->socketRead($this->_chSockObj, false, 1);
-			foreach ($this->getChannels() as $chanObj) {
-				try {
-					$this->removeChannel($chanObj);
-				} catch (\Exception $e) {
-					if ($errObj === null) {
-						$errObj	= $e;
-					}
-				}
-			}
+		foreach ($this->getChannels() as $chanObj) {
 			try {
-				$this->socketWrite($this->_chSockObj, $this->getRawCmd("QUIT"));
-				$rData		= $this->chanSocketRead(true);
-				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-					fclose($this->_chSockObj);
-					$this->_chSockObj	= null;
-				} elseif (strpos($rData, "-ERR") === 0) {
-					throw new \Exception("Error: ".$rData);
-				} else {
-					throw new \Exception("Not handled for return: ".$rData);
-				}
+				$this->removeChannel($chanObj);
 			} catch (\Exception $e) {
 				if ($errObj === null) {
 					$errObj	= $e;
 				}
 			}
 		}
-		if ($this->_mainSockObj !== null) {
-			try {
-				$this->socketRead($this->_mainSockObj, false, 1); //clear the socket
-				$this->socketWrite($this->_mainSockObj, $this->getRawCmd("QUIT"));
-				$rData		= $this->mainSocketRead(true);
-				if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
-					fclose($this->_mainSockObj);
-					$this->_mainSockObj	= null;
-				} elseif (strpos($rData, "-ERR") === 0) {
-					throw new \Exception("Error: ".$rData);
-				} else {
-					throw new \Exception("Not handled for return: ".$rData);
-				}
-			} catch (\Exception $e) {
-				if ($errObj === null) {
-					$errObj	= $e;
-				}
-			}
-		}
+		$this->_mainSockObj	= null;
+		$this->_chSockObj	= null;
+		
 		if ($errObj === null) {
 			return $this;
 		} elseif ($throw === true) {
@@ -506,5 +393,45 @@ class V1 extends Base
 		} else {
 			return $errObj;
 		}
+	}
+	public function getProtocol()
+	{
+		return $this->_protocol;
+	}
+	public function getHostname()
+	{
+		return $this->_hostname;
+	}
+	public function getPort()
+	{
+		return $this->_portNbr;
+	}
+	public function getAuth()
+	{
+		return $this->_authStr;
+	}
+	public function getTimeout()
+	{
+		return $this->_timeout;
+	}
+	public function getSslCert()
+	{
+		return $this->_sslCertObj;
+	}
+	public function getSslVerifyPeer()
+	{
+		return $this->_sslVerifyPeer;
+	}
+	public function getSslVerifyPeerName()
+	{
+		return $this->_sslVerifyPeerName;
+	}
+	public function getSslAllowSelfSigned()
+	{
+		return $this->_sslAllowSelfSigned;
+	}
+	public function getChunkSize()
+	{
+		return $this->_chunkSize;
 	}
 }

@@ -24,7 +24,7 @@ class Publish extends Base
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
-			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
+			$this->parse($this->getClient()->getMainSocket()->write($this->getRawCmd())->read(true));
 			if (
 				$this->getException() === null 
 				&& $this->getParent()->isSubscribed() === true

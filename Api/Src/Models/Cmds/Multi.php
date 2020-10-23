@@ -24,7 +24,7 @@ class Multi extends Base
 	{
 		if ($this->_isExec === false) {
 			$this->getClient()->setDatabase($this->getParent()->getId());
-			$this->parse($this->getClient()->mainSocketWrite($this->getRawCmd())->mainSocketRead(true));
+			$this->parse($this->getClient()->getMainSocket()->write($this->getRawCmd())->read(true));
 			
 			try {
 
@@ -44,7 +44,7 @@ class Multi extends Base
 					}
 				}
 
-				$rData			= $this->getClient()->mainSocketWrite($this->getClient()->getRawCmd("EXEC", array()))->mainSocketRead(true);
+				$rData			= $this->getClient()->getMainSocket()->write($this->getClient()->getRawCmd("EXEC", array()))->read(true);
 				$this->_isExec	= true;
 				$nPos			= strpos($rData, "\r\n");
 				$qLen			= intval(substr($rData, 1, $nPos));

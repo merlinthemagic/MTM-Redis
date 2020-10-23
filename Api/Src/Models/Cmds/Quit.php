@@ -2,10 +2,10 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Cmds;
 
-class Unwatch extends Base
+class Quit extends Base
 {
-	protected $_baseCmd="UNWATCH";
-	
+	protected $_baseCmd="QUIT";
+
 	public function getRawCmd()
 	{
 		return $this->getClient()->getRawCmd($this->getBaseCmd(), array());
@@ -13,21 +13,19 @@ class Unwatch extends Base
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
-			$this->getClient()->setDatabase($this->getParent()->getId());
-			$this->parse($this->getClient()->getMainSocket()->write($this->getRawCmd())->read(true));
+			$this->parse($this->getParent()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\+(OK)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse($raw[1]);
+		if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
+			$this->setResponse(true);
 		} elseif (strpos($rData, "-ERR") === 0) {
-			throw new \Exception("Error: ".$rData);
+			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}
-		return $this;
 	}
 }

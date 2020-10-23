@@ -23,7 +23,8 @@ class Subscribe extends Base
 	public function exec($throw=false)
 	{
 		if ($this->_isExec === false) {
-			$this->parse($this->getClient()->chanSocketWrite($this->getRawCmd())->chanSocketRead(true));
+			$this->getClient()->getChanSocket()->write($this->getRawCmd());
+			$this->parse($this->getClient()->chanSocketRead(true));
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);
