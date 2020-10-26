@@ -132,9 +132,15 @@ class V1 extends Base
 	}
 	public function trackedKeyCb($chanObj, $msgObj)
 	{
-		foreach ($msgObj->payload as $key) {
-			if (array_key_exists($key, $this->_trackedKeys) === true) {
-				$this->_trackedKeys[$key]->trackInvalidated();
+		if ($msgObj->payload === "FLUSHALL") {
+			foreach ($this->_trackedKeys as $keyObj) {
+				$keyObj->trackInvalidated();
+			}
+		} else {
+			foreach ($msgObj->payload as $key) {
+				if (array_key_exists($key, $this->_trackedKeys) === true) {
+					$this->_trackedKeys[$key]->trackInvalidated();
+				}
 			}
 		}
 	}

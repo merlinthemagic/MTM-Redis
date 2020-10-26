@@ -224,16 +224,22 @@ class V1 extends Base
 						$payload	= substr($reData, ($nPos + 2), $payLen);
 						$rData		.= substr($reData, ($nPos + $payLen + 4));
 					} else {
-						$payload	= array();
 						$nPos		= strpos($reData, "\r\n");
 						$keyCount	= intval(substr($reData, 1, $nPos));
-						$reData		= substr($reData, ($nPos+2));
-						for ($x=0; $x < $keyCount; $x++) {
-							$nPos		= strpos($reData, "\r\n");
-							$keyLen		= intval(substr($reData, 1, $nPos));
-							$payload[]	= substr($reData, ($nPos + 2), $keyLen);
-							$reData		= substr($reData, ($nPos + $keyLen + 4));
+						if ($keyCount < 0) {
+							$payload	= "FLUSHALL";
+							$reData		= substr($reData, ($nPos+2));
+						} else {
+							$payload	= array();
+							$reData		= substr($reData, ($nPos+2));
+							for ($x=0; $x < $keyCount; $x++) {
+								$nPos		= strpos($reData, "\r\n");
+								$keyLen		= intval(substr($reData, 1, $nPos));
+								$payload[]	= substr($reData, ($nPos + 2), $keyLen);
+								$reData		= substr($reData, ($nPos + $keyLen + 4));
+							}
 						}
+						
 						$rData		.= $reData;
 					}
 

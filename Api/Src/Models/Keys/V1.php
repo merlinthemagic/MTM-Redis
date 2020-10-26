@@ -31,7 +31,7 @@ class V1 extends Base
 		$wmObj			= $this->getDb()->newWatchMulti(array($watchObj), array($cmdObj));
 		$wmObj->exec(true, $timeout);
 		//fill data and if tracking resubscribe to cache. if no loop is on we dont get a message the key was updated
-		//but if using optin we still get unsubscribed
+		//but if using "optin" we still get unsubscribed
 		$this->pullData();
 		return $this;
 	}
