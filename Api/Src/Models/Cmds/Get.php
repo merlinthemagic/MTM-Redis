@@ -37,7 +37,7 @@ class Get extends Base
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
 		} elseif (preg_match("/(^\\\$-1\r\n)$/si", $rData) === 1) {
-			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey()));
+			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey(), 7554)); //code used by key tracking
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

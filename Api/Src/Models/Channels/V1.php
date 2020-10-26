@@ -4,7 +4,7 @@ namespace MTM\RedisApi\Models\Channels;
 
 class V1 extends Base
 {
-	protected $_iopls=false;
+	protected $_iopls=array();
 	
 	public function addMsg($payload)
 	{

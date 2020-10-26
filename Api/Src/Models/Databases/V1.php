@@ -4,16 +4,23 @@ namespace MTM\RedisApi\Models\Databases;
 
 class V1 extends Base
 {
+	protected $_trackedKeys=array();
+	
+	public function getKey($key)
+	{
+		$keyObj		= new \MTM\RedisApi\Models\Keys\V1($this, $key);
+		return $keyObj;
+	}
 	public function newTransaction()
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Multi($this);
 		return $cmdObj;
 	}
-	public function newWatchMulti($watchKeys=array(), $cmdObjs=array())
+	public function newWatchMulti($watchObjs=array(), $cmdObjs=array())
 	{
 		$wmObj		= new \MTM\RedisApi\Models\Cmds\WatchMulti($this);
-		foreach ($watchKeys as $watchKey) {
-			$wmObj->addWatch($watchKey);
+		foreach ($watchObjs as $watchObj) {
+			$wmObj->addWatch($watchObj);
 		}
 		foreach ($cmdObjs as $cmdObj) {
 			$wmObj->addCmd($cmdObj);
@@ -102,6 +109,34 @@ class V1 extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Pttl($this);
 		$cmdObj->setKey($key);
 		return $cmdObj;
+	}
+	public function trackKey($keyObj)
+	{
+		if (array_key_exists($keyObj->getKey(), $this->_trackedKeys) === false) {
+			if (count($this->_trackedKeys) === 0) {
+				$this->getParent()->getChannel("__redis__:invalidate")->subscribe()->addCb($this, "trackedKeyCb");
+			}
+			$this->_trackedKeys[$keyObj->getKey()]	= $keyObj;
+		}
+		return $this;
+	}
+	public function untrackKey($keyObj)
+	{
+		if (array_key_exists($keyObj->getKey(), $this->_trackedKeys) === true) {
+			unset($this->_trackedKeys[$keyObj->getKey()]);
+			if (count($this->_trackedKeys) === 0) {
+				$this->getParent()->getChannel("__redis__:invalidate")->removeCb($this, "trackedKeyCb");
+			}
+		}
+		return $this;
+	}
+	public function trackedKeyCb($chanObj, $msgObj)
+	{
+		foreach ($msgObj->payload as $key) {
+			if (array_key_exists($key, $this->_trackedKeys) === true) {
+				$this->_trackedKeys[$key]->trackInvalidated();
+			}
+		}
 	}
 	public function terminate($throw=true)
 	{

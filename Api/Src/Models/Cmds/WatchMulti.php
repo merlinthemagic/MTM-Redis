@@ -4,16 +4,16 @@ namespace MTM\RedisApi\Models\Cmds;
 
 class WatchMulti extends Base
 {
-	protected $_watchKeys=array();
+	protected $_watchObjs=array();
 	protected $_cmdObjs=array();
 	
-	public function addWatch($key)
+	public function addWatch($cmdObj)
 	{
 		if ($this->_isExec === false) {
-			$this->_watchKeys[]		= $key;
+			$this->_watchObjs[]		= $cmdObj;
 			return $this;
 		} else {
-			throw new \Exception("Cannot add watch key, transaction is complete");
+			throw new \Exception("Cannot add watch, transaction is complete");
 		}
 	}
 	public function addCmd($cmdObj)
@@ -35,8 +35,10 @@ class WatchMulti extends Base
 
 				try {
 					
-					foreach ($this->_watchKeys as $wKey) {
-						$dbObj->watch($wKey)->exec(true);
+					foreach ($this->_watchObjs as $cmdObj) {
+						//TODO: need to refresh/duplicate the commands
+						//they currently will not trigger again
+						$cmdObj->exec(true);
 					}
 					$trsObj			= $dbObj->newTransaction();
 					foreach ($this->_cmdObjs as $cmdObj) {
@@ -61,7 +63,7 @@ class WatchMulti extends Base
 			
 			$this->setResponse($this->_cmdObjs);
 			$this->_cmdObjs		= null;
-			$this->_watchKeys	= null;
+			$this->_watchObjs	= null;
 			$this->_isExec		= true;
 		}
 		return $this->getResponse($throw);

@@ -19,7 +19,6 @@ class V1 extends Base
 	protected $_dbId=0;
 	protected $_mainSockObj=null;
 	protected $_chSockObj=null;
-	protected $_trackSockObj=null;
 	protected $_encoder="none";
 	protected $_chanObjs=array();
 	protected $_streamObjs=array();
@@ -50,6 +49,15 @@ class V1 extends Base
 	public function getChannels()
 	{
 		return array_values($this->_chanObjs);
+	}
+	public function getChannel($name)
+	{
+		//if not exist, add
+		$chanObj	= $this->getChannelByName($name, false);
+		if ($chanObj === null) {
+			$chanObj	= $this->addChannel($name);
+		}
+		return $chanObj;
 	}
 	public function addChannel($name)
 	{
@@ -175,13 +183,16 @@ class V1 extends Base
 	public function setDatabase($id)
 	{
 		if ($this->_dbId !== $id) {
-			
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Select($this);
+			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Select($this);
 			$cmdObj->setId($id)->exec(true);
-			
 			$this->_dbId	= $id;
 			return $this;
 		}
+	}
+	public function pollSub()
+	{
+		$this->chanSocketRead(false, -1);
+		return $this;
 	}
 	public function chanSocketRead($throw=false, $timeout=5000)
 	{
@@ -197,7 +208,7 @@ class V1 extends Base
 			while(true) {
 				$sPos	= strpos($rData, $head);
 				if ($sPos !== false) {
-					
+
 					$reData		= $rData;
 					$rData		= substr($rData, 0, $sPos);
 					$reData		= substr($reData, ($sPos + $hLen));
@@ -207,14 +218,28 @@ class V1 extends Base
 					$chanName	= substr($reData, ($nPos + 2), $chanLen);
 					$reData		= substr($reData, ($nPos + $chanLen + 4));
 					
-					$nPos		= strpos($reData, "\r\n");
-					$payLen		= intval(substr($reData, 1, $nPos));
-					$payload	= substr($reData, ($nPos + 2), $payLen);
-					$rData		.= substr($reData, ($nPos + $payLen + 4));
-					
+					if (preg_match("/^(|__redis__)/", $chanName) === 0) {
+						$nPos		= strpos($reData, "\r\n");
+						$payLen		= intval(substr($reData, 1, $nPos));
+						$payload	= substr($reData, ($nPos + 2), $payLen);
+						$rData		.= substr($reData, ($nPos + $payLen + 4));
+					} else {
+						$payload	= array();
+						$nPos		= strpos($reData, "\r\n");
+						$keyCount	= intval(substr($reData, 1, $nPos));
+						$reData		= substr($reData, ($nPos+2));
+						for ($x=0; $x < $keyCount; $x++) {
+							$nPos		= strpos($reData, "\r\n");
+							$keyLen		= intval(substr($reData, 1, $nPos));
+							$payload[]	= substr($reData, ($nPos + 2), $keyLen);
+							$reData		= substr($reData, ($nPos + $keyLen + 4));
+						}
+						$rData		.= $reData;
+					}
+
 					$chanObj	= $this->getChannelByName($chanName, false);
 					if ($chanObj !== null) {
-						if (preg_match("/^(__keyevent|__keyspace)\@/", $chanName) === 0) {
+						if (preg_match("/^(__keyevent|__keyspace|__redis__)/", $chanName) === 0) {
 							//TODO: investigate if clients can signal the default serializer used to redis
 							//so all messages are serialized the same, this is not exactly sustainable
 							$payload	= $this->dataDecode($payload);
@@ -245,15 +270,29 @@ class V1 extends Base
 					$chanLen	= intval(substr($reData, 1, $nPos));
 					$chanName	= substr($reData, ($nPos + 2), $chanLen);
 					$reData		= substr($reData, ($nPos + $chanLen + 4));
-					
-					$nPos		= strpos($reData, "\r\n");
-					$payLen		= intval(substr($reData, 1, $nPos));
-					$payload	= substr($reData, ($nPos + 2), $payLen);
-					$rData		.= substr($reData, ($nPos + $payLen + 4));
-					
+
+					if (preg_match("/^(|__redis__)/", $chanName) === 0) {
+						$nPos		= strpos($reData, "\r\n");
+						$payLen		= intval(substr($reData, 1, $nPos));
+						$payload	= substr($reData, ($nPos + 2), $payLen);
+						$rData		.= substr($reData, ($nPos + $payLen + 4));
+					} else {
+						$payload	= array();
+						$nPos		= strpos($reData, "\r\n");
+						$keyCount	= intval(substr($reData, 1, $nPos));
+						$reData		= substr($reData, ($nPos+2));
+						for ($x=0; $x < $keyCount; $x++) {
+							$nPos		= strpos($reData, "\r\n");
+							$keyLen		= intval(substr($reData, 1, $nPos));
+							$payload[]	= substr($reData, ($nPos + 2), $keyLen);
+							$reData		= substr($reData, ($nPos + $keyLen + 4));
+						}
+						$rData		.= $reData;
+					}
+
 					$chanObj	= $this->getChannelByName($pattern, false);
 					if ($chanObj !== null) {
-						if (preg_match("/^(__keyevent|__keyspace)\@/", $chanName) === 0) {
+						if (preg_match("/^(__keyevent|__keyspace|__redis__)/", $chanName) === 0) {
 							//TODO: investigate if clients can signal the default serializer used to redis
 							//so all messages are serialized the same, this is not exactly sustainable
 							$payload	= $this->dataDecode($payload);
@@ -328,13 +367,10 @@ class V1 extends Base
 		}
 		return $this->_chSockObj;
 	}
-	public function getTrackSocket()
+	public function getSubSocket()
 	{
-		if ($this->_trackSockObj === null) {
-			$sockObj				= new \MTM\RedisApi\Models\Sockets\V1($this);
-			$this->_trackSockObj	= $sockObj->initialize();
-		}
-		return $this->_trackSockObj;
+		//moving away from channel towards subscription
+		return $this->getChanSocket();
 	}
 	public function getPhpRedis()
 	{
@@ -352,6 +388,46 @@ class V1 extends Base
 			}
 		}
 		return $this->_phpRedisObj;
+	}
+	public function getProtocol()
+	{
+		return $this->_protocol;
+	}
+	public function getHostname()
+	{
+		return $this->_hostname;
+	}
+	public function getPort()
+	{
+		return $this->_portNbr;
+	}
+	public function getAuth()
+	{
+		return $this->_authStr;
+	}
+	public function getTimeout()
+	{
+		return $this->_timeout;
+	}
+	public function getSslCert()
+	{
+		return $this->_sslCertObj;
+	}
+	public function getSslVerifyPeer()
+	{
+		return $this->_sslVerifyPeer;
+	}
+	public function getSslVerifyPeerName()
+	{
+		return $this->_sslVerifyPeerName;
+	}
+	public function getSslAllowSelfSigned()
+	{
+		return $this->_sslAllowSelfSigned;
+	}
+	public function getChunkSize()
+	{
+		return $this->_chunkSize;
 	}
 	public function terminate($throw=true)
 	{
@@ -393,45 +469,5 @@ class V1 extends Base
 		} else {
 			return $errObj;
 		}
-	}
-	public function getProtocol()
-	{
-		return $this->_protocol;
-	}
-	public function getHostname()
-	{
-		return $this->_hostname;
-	}
-	public function getPort()
-	{
-		return $this->_portNbr;
-	}
-	public function getAuth()
-	{
-		return $this->_authStr;
-	}
-	public function getTimeout()
-	{
-		return $this->_timeout;
-	}
-	public function getSslCert()
-	{
-		return $this->_sslCertObj;
-	}
-	public function getSslVerifyPeer()
-	{
-		return $this->_sslVerifyPeer;
-	}
-	public function getSslVerifyPeerName()
-	{
-		return $this->_sslVerifyPeerName;
-	}
-	public function getSslAllowSelfSigned()
-	{
-		return $this->_sslAllowSelfSigned;
-	}
-	public function getChunkSize()
-	{
-		return $this->_chunkSize;
 	}
 }
