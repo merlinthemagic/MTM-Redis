@@ -4,12 +4,12 @@ namespace MTM\RedisApi\Models\Streams;
 
 abstract class Base extends \MTM\RedisApi\Models\Base
 {
-	protected $_parentObj=null;
+	protected $_clientObj=null;
 	protected $_key=null;
 	
 	public function __construct($clientObj, $key)
 	{
-		$this->_parentObj	= $clientObj;
+		$this->_clientObj	= $clientObj;
 		$this->_key			= $key;
 		parent::__construct();
 	}
@@ -18,9 +18,9 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 		//dont want to throw in shutdown
 		$this->terminate(false);
 	}
-	public function getParent()
+	public function getClient()
 	{
-		return $this->_parentObj;
+		return $this->_clientObj;
 	}
 	public function getKey()
 	{

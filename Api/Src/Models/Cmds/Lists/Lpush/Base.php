@@ -1,8 +1,8 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\Lpush;
+namespace MTM\RedisApi\Models\Cmds\Lists\Lpush;
 
-abstract class Base extends \MTM\RedisApi\Models\Cmds\Db\Base
+abstract class Base extends \MTM\RedisApi\Models\Cmds\Lists\Base
 {
 	protected $_baseCmd="LPUSH";
 

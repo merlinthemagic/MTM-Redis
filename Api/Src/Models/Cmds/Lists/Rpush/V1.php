@@ -1,21 +1,11 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\Lpush;
+namespace MTM\RedisApi\Models\Cmds\Lists\Rpush;
 
 class V1 extends Base
 {
-	protected $_key=null;
 	protected $_value=null;
 	
-	public function setKey($key)
-	{
-		$this->_key		= $key;
-		return $this;
-	}
-	public function getKey()
-	{
-		return $this->_key;
-	}
 	public function setValue($value)
 	{
 		$this->_value		= $value;
@@ -28,7 +18,7 @@ class V1 extends Base
 	public function getRawCmd()
 	{
 		$data	= $this->getClient()->dataEncode($this->getValue());
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey(), $data));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getList()->getKey(), $data));
 	}
 	public function exec($throw=false)
 	{
@@ -41,7 +31,7 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));
+			$this->setResponse(intval($raw[1]));//total length of list
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
 		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
