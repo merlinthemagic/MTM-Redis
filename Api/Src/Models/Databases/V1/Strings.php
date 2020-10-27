@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Databases\V1;
 
-abstract class Strings extends Lists
+abstract class Strings extends Streams
 {
 	public function getString($key)
 	{

@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Clients\V1;
 
-class Zstance extends Streams
+class Zstance extends Sockets
 {
 	protected $_phpRedisObj=null;
 	
@@ -57,15 +57,6 @@ class Zstance extends Streams
 		foreach ($this->getDatabases() as $dbObj) {
 			try {
 				$this->removeDatabase($dbObj);
-			} catch (\Exception $e) {
-				if ($errObj === null) {
-					$errObj	= $e;
-				}
-			}
-		}
-		foreach ($this->getStreams() as $streamObj) {
-			try {
-				$this->removeStream($streamObj);
 			} catch (\Exception $e) {
 				if ($errObj === null) {
 					$errObj	= $e;

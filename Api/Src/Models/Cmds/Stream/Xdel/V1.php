@@ -1,23 +1,23 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\Del;
+namespace MTM\RedisApi\Models\Cmds\Stream\Xdel;
 
 class V1 extends Base
 {
-	protected $_key=null;
+	protected $_id=null;
 	
-	public function setKey($key)
+	public function setId($id)
 	{
-		$this->_key		= $key;
+		$this->_id		= $id;
 		return $this;
 	}
-	public function getKey()
+	public function getId()
 	{
-		return $this->_key;
+		return $this->_id;
 	}
 	public function getRawCmd()
 	{
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey()));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getStream()->getKey(), $this->getId()));
 	}
 	public function exec($throw=false)
 	{
@@ -32,11 +32,9 @@ class V1 extends Base
 		if (preg_match("/^\:(1)\r\n$/si", $rData, $raw) === 1) {
 			$this->setResponse(intval($raw[1]));
 		} elseif (preg_match("/^\:(0)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]))->setException(new \Exception("Cannot delete, key does not exist"));
-		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
-			$this->_isQueued	= true;
+			$this->setResponse(intval($raw[1]))->setException(new \Exception("Id did not exist: ".$this->getId()));
 		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

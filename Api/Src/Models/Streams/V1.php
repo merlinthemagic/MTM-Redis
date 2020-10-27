@@ -4,81 +4,6 @@ namespace MTM\RedisApi\Models\Streams;
 
 class V1 extends Base
 {
-	protected $_groupObjs=array();
-
-	public function getGroups()
-	{
-		return array_values($this->_groupObjs);
-	}
-	public function addGroup($name)
-	{
-		if ($this->getGroupByName($name, false) !== null) {
-			throw new \Exception("Group already exist: ".$name);
-		}
-		$grpObj		= new \MTM\RedisApi\Models\Groups\V1($this, $name);
-		$this->getParent()->getPhpRedis()->xGroup("create", $this->getKey(), $name, 0, true);
-		$this->_groupObjs[$grpObj->getGuid()]	= $grpObj;
-		return $grpObj;
-	}
-	public function removeGroup($grpObj)
-	{
-		if (array_key_exists($grpObj->getGuid(), $this->_groupObjs) === true) {
-			unset($this->_groupObjs[$grpObj->getGuid()]);
-		} else {
-			throw new \Exception("Group does not belong to this client");
-		}
-	}
-	public function getGroupByName($name, $throw=false)
-	{
-		foreach ($this->_groupObjs as $grpObj) {
-			if ($grpObj->getName() == $name) {
-				return $chanObj;
-			}
-		}
-		if ($throw === true) {
-			throw new \Exception("Group does not exist: ".$name);
-		} else {
-			return null;
-		}
-	}
-	public function xLen($throw=true)
-	{
-		$msgCount	= $this->getParent()->getPhpRedis()->xLen($this->getKey());
-		if (is_int($msgCount) === true) {
-			return $msgCount;
-		} elseif ($throw === true) {
-			//dont know when this can happen, if stream does not exist 0 is returned
-			throw new \Exception("xLen failed to retrieve a message count");
-		} else {
-			return null;
-		}
-	}
-	protected function xInfo($throw=false)
-	{
-		$info	= $this->getParent()->getPhpRedis()->xInfo("STREAM", $this->getKey());
-		if ($info !== false) {
-			$info	= (object) $info;
-			return $info;
-		} elseif ($throw === true) {
-			throw new \Exception("xInfo failed, likely stream does not exist");
-		} else {
-			return null;
-		}
-	}
-	public function xAdd($fields=array(), $msgId="*", $throw=false)
-	{
-		$msgId	= $this->getParent()->getPhpRedis()->xAdd($this->getKey(), $msgId, $fields);
-		if ($msgId !== false) {
-			$msgObj				= $this->getMsgObj();
-			$msgObj->id			= $msgId;
-			$msgObj->payload	= $fields;
-			return $msgObj;
-		} elseif ($throw === true) {
-			throw new \Exception("xAdd failed, likely using existing msg ID");
-		} else {
-			return null;
-		}
-	}
 	public function xReadFirst($throw=false)
 	{
 		$iObj	= $this->xInfo(false);
@@ -117,6 +42,7 @@ class V1 extends Base
 				$msgObj->id			= $lastId;
 				$msgObj->payload	= $lastMsg;
 				return $msgObj;
+				
 			} elseif ($throw === true) {
 				throw new \Exception("xReadLast failed, stream is empty");
 			} else {

@@ -1,8 +1,8 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Clients\V1;
+namespace MTM\RedisApi\Models\Databases\V1;
 
-abstract class Streams extends Sockets
+abstract class Streams extends Lists
 {
 	protected $_streamObjs=array();
 	
@@ -24,7 +24,7 @@ abstract class Streams extends Sockets
 		if ($this->getStreamByKey($key, false) !== null) {
 			throw new \Exception("Stream already exist: ".$key);
 		}
-		$streamObj		= new \MTM\RedisApi\Models\Streams\V1($this, $key);
+		$streamObj		= new \MTM\RedisApi\Models\Streams\V1\Zstance($this, $key);
 		$this->_streamObjs[$streamObj->getGuid()]	= $streamObj;
 		return $streamObj;
 	}
@@ -34,7 +34,7 @@ abstract class Streams extends Sockets
 			unset($this->_streamObjs[$streamObj->getGuid()]);
 			$streamObj->terminate();
 		} else {
-			throw new \Exception("Stream does not belong to this client");
+			throw new \Exception("Stream does not belong to this database");
 		}
 	}
 	public function getStreamByKey($key, $throw=false)
