@@ -4,30 +4,11 @@ namespace MTM\RedisApi\Models\Cmds;
 
 abstract class Base extends \MTM\RedisApi\Models\Base
 {
-	protected $_parentObj=null;
-	protected $_baseCmd=null;
 	protected $_respData=null;
 	protected $_isExec=false;
 	protected $_isQueued=false;
 	protected $_exObj=null;
 	
-	public function __construct($pObj)
-	{
-		$this->_parentObj	= $pObj;
-		parent::__construct();
-	}
-	public function getParent()
-	{
-		return $this->_parentObj;
-	}
-	public function getClient()
-	{
-		return $this->getParent()->getParent();
-	}
-	public function getBaseCmd()
-	{
-		return $this->_baseCmd;
-	}
 	public function setResponse($data)
 	{
 		$this->_respData	= $data;
@@ -57,5 +38,13 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	public function isQueued()
 	{
 		return $this->_isQueued;
+	}
+	public function reset()
+	{
+		$this->_respData	= null;
+		$this->_isExec		= false;
+		$this->_isQueued	= false;
+		$this->_exObj		= null;
+		return $this;
 	}
 }

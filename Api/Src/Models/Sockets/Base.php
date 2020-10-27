@@ -4,9 +4,11 @@ namespace MTM\RedisApi\Models\Sockets;
 
 abstract class Base extends \MTM\RedisApi\Models\Base
 {
+	protected $_clientObj=null;
+	
 	public function __construct($clientObj)
 	{
-		$this->_parentObj	= $clientObj;
+		$this->_clientObj	= $clientObj;
 		parent::__construct();
 	}
 	public function __destruct()
@@ -14,8 +16,8 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 		//dont want to throw in shutdown
 		$this->terminate(false);
 	}
-	public function getParent()
+	public function getClient()
 	{
-		return $this->_parentObj;
+		return $this->_clientObj;
 	}
 }

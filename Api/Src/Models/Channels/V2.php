@@ -24,8 +24,7 @@ class V2 extends Base
 	public function subscribe()
 	{
 		if ($this->_isSub === false) {
-			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Psubscribe($this);
-			$cmdObj->setPattern($this->getName());
+			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Channel\Psubscribe\V1($this);
 			$cmdObj->exec(true);
 			$this->_isSub	= true;
 		}
@@ -35,8 +34,7 @@ class V2 extends Base
 	{
 		if ($this->_isSub === true) {
 			
-			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Punsubscribe($this);
-			$cmdObj->setPattern($this->getName());
+			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Channel\Punsubscribe\V1($this);
 			$cmdObj->exec(true);
 			$this->_isSub	= false;
 		}

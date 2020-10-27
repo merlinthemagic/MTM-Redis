@@ -4,7 +4,7 @@ namespace MTM\RedisApi\Models\Channels;
 
 abstract class Base extends \MTM\RedisApi\Models\Base
 {
-	protected $_parentObj=null;
+	protected $_clientObj=null;
 	protected $_name=null;
 	protected $_msgs=array();
 	protected $_isSub=false;
@@ -12,7 +12,7 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	
 	public function __construct($clientObj, $name)
 	{
-		$this->_parentObj	= $clientObj;
+		$this->_clientObj	= $clientObj;
 		$this->_name		= $name;
 		parent::__construct();
 	}
@@ -20,9 +20,9 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	{
 		$this->unsubscribe();
 	}
-	public function getParent()
+	public function getClient()
 	{
-		return $this->_parentObj;
+		return $this->_clientObj;
 	}
 	public function getName()
 	{

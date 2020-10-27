@@ -5,6 +5,7 @@ namespace MTM\RedisApi\Models\Sockets;
 class V1 extends Base
 {
 	protected $_id=null;
+	protected $_dbId=0;
 	protected $_sockObj=null;
 	protected $_isInit=false;
 	protected $_isTerm=false;
@@ -24,12 +25,20 @@ class V1 extends Base
 	}
 	public function ping($throw=false)
 	{
-		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Ping($this);
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Ping\V1($this);
 		return $cmdObj->exec($throw);
+	}
+	public function selectDb($id)
+	{
+		if ($id !== $this->_dbId) {
+			$this->getClient()->getDatabase($id)->select()->exec(true);
+			$this->_dbId	= $id;
+		}
+		return $this;
 	}
 	public function write($strCmd)
 	{
-		$cmdParts	= str_split($strCmd, $this->getParent()->getChunkSize());
+		$cmdParts	= str_split($strCmd, $this->getClient()->getChunkSize());
 		foreach ($cmdParts as $cmdPart) {
 			$written	= fwrite($this->getSocket(), $cmdPart);
 			if (strlen($cmdPart) != $written) {
@@ -61,29 +70,29 @@ class V1 extends Base
 	{
 		if ($this->_isInit === false) {
 
-			if ($this->getParent()->getSslCert() === null) {
-				$strConn	= $this->getParent()->getProtocol()."://".$this->getParent()->getHostname().":".$this->getParent()->getPort()."/";
+			if ($this->getClient()->getSslCert() === null) {
+				$strConn	= $this->getClient()->getProtocol()."://".$this->getClient()->getHostname().":".$this->getClient()->getPort()."/";
 			} else {
 				//steal logic from wsSocket client
 				throw new \Exception("Not yet handled for tls");
 			}
 			
-			$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $this->getParent()->getTimeout(), STREAM_CLIENT_CONNECT);
+			$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $this->getClient()->getTimeout(), STREAM_CLIENT_CONNECT);
 			if (is_resource($sockRes) === false) {
 				throw new \Exception("Socket Error: " . $errstr, $errno);
 			}
 				
 			stream_set_blocking($sockRes, false);
-			stream_set_chunk_size($sockRes, $this->getParent()->getChunkSize());
+			stream_set_chunk_size($sockRes, $this->getClient()->getChunkSize());
 			
 			$this->_sockObj	= $sockRes;
 			
-			if ($this->getParent()->getAuth() != "") {
+			if ($this->getClient()->getAuth() != "") {
 				
 				try {
 				
-					$cmdObj		= new \MTM\RedisApi\Models\Cmds\Auth($this);
-					$cmdObj->setAuth($this->getParent()->getAuth())->exec(true);
+					$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Auth\V1($this);
+					$cmdObj->setAuth($this->getClient()->getAuth())->exec(true);
 
 				} catch (\Exception $e) {
 					fclose($this->_sockObj);
@@ -94,7 +103,7 @@ class V1 extends Base
 			
 			try {
 				
-				$cmdObj		= new \MTM\RedisApi\Models\Cmds\ClientId($this);
+				$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Id\V1($this);
 				$this->_id	= $cmdObj->exec(true);
 				
 			} catch (\Exception $e) {
@@ -110,12 +119,12 @@ class V1 extends Base
 	public function enableTracking()
 	{
 		if ($this->isTracked() === false) {
-			$subSock	= $this->getParent()->getSubSocket();
+			$subSock	= $this->getClient()->getSubSocket();
 			if ($subSock->getId() === $this->getId()) {
 				throw new \Exception("You cannot enable tracking on the the subscription socket");
 			}
 			
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\ClientTracking($this);
+			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Tracking\V1($this);
 			$cmdObj->setTrack(true)->setRedirectionId($subSock->getId());
 			$cmdObj->setNoLoop($this->getTrackNoLoop())->setMode($this->getTrackMode());
 			foreach ($this->getTrackPrefixes() as $prefix) {
@@ -130,7 +139,7 @@ class V1 extends Base
 	{
 		if ($this->isTracked() === true) {
 			
-			$cmdObj				= new \MTM\RedisApi\Models\Cmds\ClientTracking($this);
+			$cmdObj				= new \MTM\RedisApi\Models\Cmds\Socket\Client\Tracking\V1($this);
 			$cmdObj->setTrack(false)->exec(true);
 			$this->_isTracked	= false;
 		}
@@ -171,7 +180,7 @@ class V1 extends Base
 	{
 		if ($this->_isInit === true && $this->_isTerm === false) {
 			$this->read(false, -1); //clear the socket before quitting
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Quit($this);
+			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Quit\V1($this);
 			$cmdObj->exec($throw);
 			
 			fclose($this->_sockObj);

@@ -5,16 +5,7 @@ namespace MTM\RedisApi\Models\Streams;
 class V1 extends Base
 {
 	protected $_groupObjs=array();
-	
-	public function __destruct()
-	{
-		foreach ($this->getGroups() as $grpObj) {
-			try {
-				$this->removeGroup($grpObj);
-			} catch (\Exception $e) {
-			}
-		}
-	}
+
 	public function getGroups()
 	{
 		return array_values($this->_groupObjs);

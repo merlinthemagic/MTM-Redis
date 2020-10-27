@@ -42,8 +42,7 @@ class V1 extends Base
 	public function subscribe()
 	{
 		if ($this->_isSub === false) {
-			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Subscribe($this);
-			$cmdObj->setName($this->getName());
+			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Channel\Subscribe\V1($this);
 			$cmdObj->exec(true);
 			$this->_isSub	= true;
 		}
@@ -53,8 +52,7 @@ class V1 extends Base
 	{
 		if ($this->_isSub === true) {
 			
-			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Unsubscribe($this);
-			$cmdObj->setName($this->getName());
+			$cmdObj			= new \MTM\RedisApi\Models\Cmds\Channel\Unsubscribe\V1($this);
 			$cmdObj->exec(true);
 			$this->_isSub	= false;
 		}
@@ -63,7 +61,7 @@ class V1 extends Base
 	public function publish($msg)
 	{
 		//there is no requirement the channel be subscribed in order to publish
-		$cmdObj			= new \MTM\RedisApi\Models\Cmds\Publish($this);
+		$cmdObj			= new \MTM\RedisApi\Models\Cmds\Channel\Publish\V1($this);
 		$cmdObj->setMessage($msg);
 		return $cmdObj;
 	}
