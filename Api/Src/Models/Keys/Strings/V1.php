@@ -41,7 +41,7 @@ class V1 extends Base
 		$cmdObj			= $this->getDb()->delete($this->getKey());
 		$wmObj			= $this->getClient()->newWatchMulti(array($watchObj), array($cmdObj));
 		$wmObj->exec(true, $timeout);
-		$this->pullData(); //fill data and if tracking resubscribe to cache
+		$this->pullData();
 		return $this;
 	}
 	public function setUpdateCb($obj, $method)
@@ -67,6 +67,11 @@ class V1 extends Base
 			$this->getDb()->trackKey($this);
 			$this->_isTracking	= true;
 			$this->pullData();
+			if ($this->getExists() === false) {
+				$this->disableTracking();
+				//update and delete does not take effect if the key does not exist
+				throw new \Exception("Key does not exist, tracking is not possible");
+			}
 		}
 		return $this;
 	}
@@ -134,5 +139,9 @@ class V1 extends Base
 			throw $cmdObj->getException();
 		}
 		return $this->_data;
+	}
+	public function terminate($throw=false)
+	{
+		$this->disableTracking();
 	}
 }

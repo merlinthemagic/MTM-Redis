@@ -32,6 +32,7 @@ abstract class Sockets extends Lists
 	{
 		$curCount	= $this->_chMsgCount;
 		$this->chanSocketRead(false, -1);
+		file_put_contents("/dev/shm/merlin.txt", __METHOD__ . " - " . $this->_chMsgCount . "\n", FILE_APPEND);
 		return $this->_chMsgCount - $curCount; //return number of new messages, helpful to throttle poll frequency
 	}
 	public function chanSocketRead($throw=false, $timeout=5000)

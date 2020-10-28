@@ -1,12 +1,12 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\SetEx;
+namespace MTM\RedisApi\Models\Cmds\Db\PsetEx;
 
 class V1 extends Base
 {
 	protected $_key=null;
 	protected $_value=null;
-	protected $_secs=null;
+	protected $_ms=null;
 	
 	public function setKey($key)
 	{
@@ -28,12 +28,12 @@ class V1 extends Base
 	}
 	public function setExpire($value)
 	{
-		$this->_secs		= $value;
+		$this->_ms		= $value;
 		return $this;
 	}
 	public function getExpire()
 	{
-		return $this->_secs;
+		return $this->_ms;
 	}
 	public function getRawCmd()
 	{

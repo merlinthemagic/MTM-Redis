@@ -16,6 +16,10 @@ abstract class Base extends \MTM\RedisApi\Models\Keys\Base
 		$this->_key			= $key;
 		parent::__construct();
 	}
+	public function __destruct()
+	{
+		$this->terminate(false);
+	}
 	public function getKey()
 	{
 		return $this->_key;

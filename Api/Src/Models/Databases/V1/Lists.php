@@ -41,9 +41,9 @@ abstract class Lists extends Base
 	public function deleteList($listObj)
 	{
 		if (array_key_exists($listObj->getGuid(), $this->_listObjs) === true) {
+			//list is still usable, its just empty and will be created with the next message
 			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Del\V1($this);
 			$cmdObj->setKey($listObj->getKey())->exec(false);
-			$this->removeList($listObj);
 			return $this;
 		} else {
 			throw new \Exception("List does not belong to this database");

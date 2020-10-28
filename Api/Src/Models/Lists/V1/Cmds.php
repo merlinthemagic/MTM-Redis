@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Lists\V1;
 
-abstract class Strings extends Base
+abstract class Cmds extends Base
 {
 	public function lPush($value=null)
 	{

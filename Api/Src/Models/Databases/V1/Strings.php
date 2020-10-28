@@ -39,4 +39,10 @@ abstract class Strings extends Streams
 		$cmdObj->setKey($key)->setValue($value)->setExpire($secs);
 		return $cmdObj;
 	}
+	public function pSetEx($key, $value, $ms)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\PsetEx\V1($this);
+		$cmdObj->setKey($key)->setValue($value)->setExpire($ms);
+		return $cmdObj;
+	}
 }

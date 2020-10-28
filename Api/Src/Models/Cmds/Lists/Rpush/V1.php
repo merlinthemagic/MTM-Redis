@@ -35,7 +35,7 @@ class V1 extends Base
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
 		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
+			$this->setResponse(null)->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}
