@@ -90,9 +90,9 @@ class V1 extends Base
 					$fields[$fVal]	= $this->getClient()->dataDecode($vVal);
 				}
 				
-				$rObj			= new \stdClass();
+				$rObj			= $this->getStream()->getMsgObj();
 				$rObj->id		= $eleId;
-				$rObj->fields	= $fields;
+				$rObj->payload	= $fields;
 				$rObjs[]		= $rObj;
 			}
 		}

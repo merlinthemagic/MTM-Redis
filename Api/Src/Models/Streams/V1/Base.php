@@ -26,7 +26,7 @@ abstract class Base extends \MTM\RedisApi\Models\Streams\Base
 	{
 		return $this->_key;
 	}
-	protected function getMsgObj()
+	public function getMsgObj()
 	{
 		$msgObj				= new \stdClass();
 		$msgObj->id			= null;

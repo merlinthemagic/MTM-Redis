@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Streams\V1;
 
-class Zstance extends Strings
+class Zstance extends Groups
 {
 	public function terminate($throw=true)
 	{

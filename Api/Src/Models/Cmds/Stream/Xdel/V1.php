@@ -29,14 +29,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:(1)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));
-		} elseif (preg_match("/^\:(0)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]))->setException(new \Exception("Id did not exist: ".$this->getId()));
-		} elseif (strpos($rData, "-ERR") === 0) {
+		if (strpos($rData, "-ERR") === 0) {
 			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-		} else {
-			throw new \Exception("Not handled for return: ".$rData);
+		}
+		$count	= $this->getClient()->parseResponse($rData);
+		$this->setResponse($count);
+		if ($count === 0) {
+			$this->setException(new \Exception("Id did not exist: ".$this->getId()));
 		}
 		return $this;
 	}

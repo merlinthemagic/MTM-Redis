@@ -4,7 +4,7 @@ namespace MTM\RedisApi\Models\Clients\V1;
 
 class Zstance extends Sockets
 {
-	protected $_phpRedisObj=null;
+	protected $_pData="";
 	
 	public function getRawCmd($cmd, $args=array())
 	{
@@ -34,22 +34,53 @@ class Zstance extends Sockets
 			throw new \Exception("Invalid encoder: ". $this->_encoder);
 		}
 	}
-	public function getPhpRedis()
+	protected function parseArray()
 	{
-		//php Redis functionality will be replaced over time
-		//right now we just want to have non blocking subscriptions
-		if ($this->_phpRedisObj === null) {
-			if (extension_loaded("redis") === false) {
-				//is the extension added under php.ini? extension=/usr/lib64/php/modules/redis.so
-				throw new \Exception("PhpRedis extension not loaded");
-			}
-			$this->_phpRedisObj		= new \Redis();
-			$this->_phpRedisObj->connect($this->_hostname, $this->_portNbr);
-			if ($this->_authStr != "") {
-				$this->_phpRedisObj->auth($this->_authStr);
-			}
+		$reData			= array();
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reSize			= intval(substr($this->_pData, 1, $nPos));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		for ($x=0; $x<$reSize; $x++) {
+			$reData[]	= $this->parser($rData);
 		}
-		return $this->_phpRedisObj;
+		return $reData;
+	}
+	protected function parseString()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reSize			= intval(substr($this->_pData, 1, $nPos));
+		if ($reSize < 0) {
+			$reData			= false;
+			$this->_pData	= substr($this->_pData, ($nPos+2));
+		} else {
+			$reData			= substr($this->_pData, ($nPos+2), $reSize);
+			$this->_pData	= substr($this->_pData, ($nPos+$reSize+4));
+		}
+		return $reData;
+	}
+	protected function parseInteger()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reData			= intval(substr($this->_pData, 1, $nPos));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		return $reData;
+	}
+	protected function parser()
+	{
+		if (strpos($this->_pData, "*") === 0) {
+			return $this->parseArray();
+		} elseif (strpos($this->_pData, "\$") === 0) {
+			return $this->parseString();
+		} elseif (strpos($this->_pData, ":") === 0) {
+			return $this->parseInteger();
+		} else {
+			throw new \Exception("Not handled for response data: ".$this->_pData);
+		}
+	}
+	public function parseResponse($rData)
+	{
+		$this->_pData	= $rData;
+		return $this->parser();
 	}
 	public function terminate($throw=true)
 	{

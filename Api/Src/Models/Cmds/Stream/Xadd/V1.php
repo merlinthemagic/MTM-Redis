@@ -48,13 +48,7 @@ class V1 extends Base
 			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 			return $this;
 		}
-		$nPos	= strpos($rData, "\r\n");
-		$cLen	= intval(substr($rData, 1, ($nPos-1)));
-		if ($cLen > 0) {
-			$this->setResponse(substr($rData, ($nPos+2), $cLen));
-		} else {
-			throw new \Exception("Not handled for return: ".$rData);
-		}
+		$this->setResponse($this->getClient()->parseResponse($rData));
 		return $this;
 	}
 }

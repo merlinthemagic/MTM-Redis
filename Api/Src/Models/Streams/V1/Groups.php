@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Streams\V1;
 
-abstract class Groups extends Base
+abstract class Groups extends Cmds
 {
 	protected $_groupObjs=array();
 	

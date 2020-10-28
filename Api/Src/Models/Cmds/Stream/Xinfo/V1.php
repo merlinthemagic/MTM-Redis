@@ -18,87 +18,52 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		//there is room for lots of optimization here
 		if (strpos($rData, "-ERR") === 0) {
 			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 			return $this;
 		}
-		$nPos			= strpos($rData, "\r\n");
-		$mLen			= intval(substr($rData, 1, $nPos));
-		if ($mLen > 0) {
-			$rObj		= new \stdClass();
-			$rData		= substr($rData, ($nPos+2));
-			while(true) {
-				$nPos	= strpos($rData, "\r\n");
-				$aLen	= intval(substr($rData, 1, $nPos));
-				$attr	= substr($rData, ($nPos+2), $aLen);
-				$rData	= substr($rData, ($nPos+$aLen+4));
-				
-				if (in_array($attr, array("length", "radix-tree-keys", "radix-tree-nodes", "groups")) === true) {
-					//int inbound
-					$nPos			= strpos($rData, "\r\n");
-					$aVal			= intval(substr($rData, 1, $nPos));
-					$rData			= substr($rData, ($nPos+2));
-					$rObj->$attr	= $aVal;
-				} elseif (in_array($attr, array("last-generated-id")) === true) {
-					//string inbound
-					$nPos			= strpos($rData, "\r\n");
-					$vLen			= intval(substr($rData, 1, $nPos));
-					$aVal			= substr($rData, ($nPos+2), $vLen);
-					$rData			= substr($rData, ($nPos+$vLen+4));
-					$rObj->$attr	= $aVal;
-				} elseif (in_array($attr, array("first-entry", "last-entry")) === true) {
-					//array or null inbound
-					$nPos			= strpos($rData, "\r\n");
-					$arrLen			= intval(substr($rData, 1, $nPos));
-					$rData			= substr($rData, ($nPos+2));
-					if ($arrLen < 0) {
-						$rObj->$attr	= null;
-					} else {
-						
-						//get id
-						$nPos		= strpos($rData, "\r\n");
-						$idLen		= intval(substr($rData, 1, $nPos));
-						$idVal		= substr($rData, ($nPos+2), $idLen);
-						$rData		= substr($rData, ($nPos+4+$idLen));
-						
-						//find the fields
-						$nPos		= strpos($rData, "\r\n");
-						$iCount		= intval(substr($rData, 1, $nPos)) / 2;
-						$rData		= substr($rData, ($nPos+2));
-						
-						$fields		= array();
-						for ($x=0; $x<$iCount; $x++) {
-							$nPos		= strpos($rData, "\r\n");
-							$fLen		= intval(substr($rData, 1, $nPos));
-							$fVal		= substr($rData, ($nPos+2), $fLen);
-							$rData		= substr($rData, ($nPos+4+$fLen));
-							
-							$nPos		= strpos($rData, "\r\n");
-							$vLen		= intval(substr($rData, 1, $nPos));
-							$vVal		= substr($rData, ($nPos+2), $vLen);
-							$rData		= substr($rData, ($nPos+4+$vLen));
-							
-							$fields[$fVal]	= $this->getClient()->dataDecode($vVal);
-						}
-						
-						$rObj->$attr			= new \stdClass();
-						$rObj->$attr->id		= $idVal;
-						$rObj->$attr->fields	= $fields;
-					}
-					
-				} else {
-					throw new \Exception("Not handled for return: ".$rData);
-				}
-				
-				if ($rData == "") {
-					break;
-				}
-			}
-			$this->setResponse($rObj);
+		
+		$dArr				= $this->getClient()->parseResponse($rData);
+		$rObj				= new \stdClass();
+		$rObj->{$dArr[0]}	= $dArr[1];
+		$rObj->{$dArr[2]}	= $dArr[3];
+		$rObj->{$dArr[4]}	= $dArr[5];
+		$rObj->{$dArr[6]}	= $dArr[7];
+		$rObj->{$dArr[8]}	= $dArr[9];
+		if ($dArr[11] === false) {
+			$rObj->{$dArr[10]}	= null;
 		} else {
-			throw new \Exception("Not handled for return: ".$rData);
+			
+			$mObj				= $this->getStream()->getMsgObj();
+			$rObj->{$dArr[10]}	= $mObj;
+			
+			$mObj->id			= $dArr[11][0];
+			$mObj->payload		= array();
+			$fCount				= count($dArr[11][1]) / 2;
+			for ($x=0; $x<$fCount; $x++) {
+				$i						= $x*2;
+				$field					= $dArr[11][1][$i];
+				$value					= $dArr[11][1][($i+1)];
+				$mObj->payload[$field]	= $this->getClient()->dataDecode($value);
+			}
 		}
+		if ($dArr[13] === false) {
+			$rObj->{$dArr[12]}	= null;
+		} else {
+			$mObj				= $this->getStream()->getMsgObj();
+			$rObj->{$dArr[12]}	= $mObj;
+			
+			$mObj->id			= $dArr[13][0];
+			$mObj->payload		= array();
+			$fCount				= count($dArr[13][1]) / 2;
+			for ($x=0; $x<$fCount; $x++) {
+				$i						= $x*2;
+				$field					= $dArr[13][1][$i];
+				$value					= $dArr[13][1][($i+1)];
+				$mObj->payload[$field]	= $this->getClient()->dataDecode($value);
+			}
+		}
+		$this->setResponse($rObj);
 		return $this;
 	}
 }
