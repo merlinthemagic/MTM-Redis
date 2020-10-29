@@ -61,4 +61,10 @@ abstract class Cmds extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Stream\Xread\V1($this);
 		return $cmdObj;
 	}
+	public function delete()
+	{
+		//delete self
+		$this->getDb()->deleteStream($this);
+		return $this;
+	}
 }

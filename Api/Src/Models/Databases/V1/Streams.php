@@ -37,6 +37,18 @@ abstract class Streams extends Lists
 			throw new \Exception("Stream does not belong to this database");
 		}
 	}
+	public function deleteStream($streamObj)
+	{
+		if (array_key_exists($streamObj->getGuid(), $this->_streamObjs) === true) {
+			//stream is not usable any longer
+			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Del\V1($this);
+			$cmdObj->setKey($streamObj->getKey())->exec(false);
+			$this->removeStream($streamObj);
+			return $this;
+		} else {
+			throw new \Exception("Stream does not belong to this database");
+		}
+	}
 	public function getStreamByKey($key, $throw=false)
 	{
 		foreach ($this->_streamObjs as $streamObj) {

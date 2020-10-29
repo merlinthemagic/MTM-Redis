@@ -58,7 +58,7 @@ class V1 extends Base
 	{
 		return $this->_isTracking;
 	}
-	public function enableTracking()
+	public function enableTracking($create=false, $value=null)
 	{
 		if ($this->isTracking() === false) {
 			if ($this->getSocket()->isTracked() === false) {
@@ -68,9 +68,15 @@ class V1 extends Base
 			$this->_isTracking	= true;
 			$this->pullData();
 			if ($this->getExists() === false) {
-				$this->disableTracking();
-				//update and delete does not take effect if the key does not exist
-				throw new \Exception("Key does not exist, tracking is not possible");
+				if ($create === false) {
+					$this->disableTracking();
+					//update and delete does not take effect if the key does not exist
+					throw new \Exception("Key does not exist, tracking is not possible");
+				} else {
+					//create the key.. if it was not created in the meantime
+					$this->getDb()->setNx($this->getKey(), $value)->exec(false);
+					$this->pullData();
+				}
 			}
 		}
 		return $this;

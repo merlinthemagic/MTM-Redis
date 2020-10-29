@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Databases\V1;
 
-abstract class Tracking extends Strings
+abstract class Tracking extends StringCmds
 {
 	protected $_trackedKeys=array();
 	

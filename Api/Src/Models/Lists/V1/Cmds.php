@@ -26,4 +26,10 @@ abstract class Cmds extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Lists\Rpop\V1($this);
 		return $cmdObj;
 	}
+	public function delete()
+	{
+		//delete self
+		$this->getDb()->deleteList($this);
+		return $this;
+	}
 }

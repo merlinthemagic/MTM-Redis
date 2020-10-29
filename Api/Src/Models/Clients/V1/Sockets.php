@@ -24,26 +24,16 @@ abstract class Sockets extends Lists
 		}
 		return $this->_subSockObj;
 	}
-	public function getChanSocket()
-	{
-		return $this->getSubSocket();
-	}
 	public function pollSub()
 	{
 		$curCount	= $this->_chMsgCount;
-		$this->chanSocketRead(false, -1);
-		file_put_contents("/dev/shm/merlin.txt", __METHOD__ . " - " . $this->_chMsgCount . "\n", FILE_APPEND);
+		$this->subSocketRead(false, -1);
 		return $this->_chMsgCount - $curCount; //return number of new messages, helpful to throttle poll frequency
-	}
-	public function chanSocketRead($throw=false, $timeout=5000)
-	{
-		//temp alias
-		return $this->subSocketRead($throw, $timeout);
 	}
 	public function subSocketRead($throw=false, $timeout=5000)
 	{
 		$sTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
-		$rData	= $this->getChanSocket()->read($throw, $timeout);
+		$rData	= $this->getSubSocket()->read($throw, $timeout);
 		$eTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
 		$rTime	= $timeout - (($eTime - $sTime) * 1000);
 		
