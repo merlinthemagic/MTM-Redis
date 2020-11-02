@@ -17,23 +17,20 @@ abstract class Tracking extends Cmds
 				throw new \Exception("You cannot enable tracking on the the subscription socket");
 			}
 			
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Tracking\V1($this);
-			$cmdObj->setTrack(true)->setRedirectionId($subSock->getId());
+			$cmdObj		= $this->clientTracking(true)->setRedirectionId($subSock->getId());
 			$cmdObj->setNoLoop($this->getTrackNoLoop())->setMode($this->getTrackMode());
 			foreach ($this->getTrackPrefixes() as $prefix) {
 				$cmdObj->addPrefix($prefix);
 			}
 			$cmdObj->exec(true);
-			$this->_isTracked			= true;
+			$this->_isTracked	= true;
 		}
 		return $this;
 	}
 	public function disableTracking()
 	{
 		if ($this->isTracked() === true) {
-			
-			$cmdObj				= new \MTM\RedisApi\Models\Cmds\Socket\Client\Tracking\V1($this);
-			$cmdObj->setTrack(false)->exec(true);
+			$this->clientTracking(false)->exec(true);
 			$this->_isTracked	= false;
 		}
 		return $this;

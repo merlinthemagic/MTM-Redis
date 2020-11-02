@@ -21,7 +21,7 @@ class V1 extends Base
 	{
 		if (preg_match("/^\\\$([0-9]+)\r\n/si", $rData, $raw, PREG_OFFSET_CAPTURE) === 1) {
 			$data	= $this->getClient()->dataDecode(substr($rData, ($raw[1][1]+strlen($raw[1][0])+2), $raw[1][0]));
-			$this->setResponse($data)->postTracking();
+			$this->setResponse($data);
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
 		} elseif (preg_match("/(^\\\$-1\r\n)$/si", $rData) === 1) {

@@ -29,13 +29,14 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	}
 	public function selectDb()
 	{
-		$this->getSocket()->selectDb($this->getDb()->getId());
+		$this->getDb()->selectDb();
 		return $this;
 	}
 	protected function preTracking()
 	{
 		if ($this->getList()->isTracking() === false) {
 			if ($this->getSocket()->getTrackMode() === "OPTOUT") {
+				$this->selectDb();
 				$this->getSocket()->clientCaching(false)->exec(true);
 			}
 		}
@@ -45,6 +46,7 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	{
 		if ($this->getList()->isTracking() === true) {
 			if ($this->getSocket()->getTrackMode() === "OPTIN") {
+				$this->selectDb();
 				$this->getSocket()->clientCaching(true)->exec(true);
 				$this->getList()->lLen()->exec(true);
 			}

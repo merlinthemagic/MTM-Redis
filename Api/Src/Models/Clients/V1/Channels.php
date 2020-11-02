@@ -19,6 +19,15 @@ abstract class Channels extends Base
 		}
 		return $chanObj;
 	}
+	public function getPatternChannel($name)
+	{
+		//if not exist, add
+		$chanObj	= $this->getChannelByName($name, false);
+		if ($chanObj === null) {
+			$chanObj	= $this->addPatternChannel($name);
+		}
+		return $chanObj;
+	}
 	public function addChannel($name)
 	{
 		if ($this->getChannelByName($name, false) !== null) {

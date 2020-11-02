@@ -52,9 +52,7 @@ abstract class Tracking extends Cmds
 	public function enableTracking($create=false, $value=null)
 	{
 		if ($this->isTracking() === false) {
-			if ($this->getSocket()->isTracked() === false) {
-				$this->getSocket()->enableTracking();
-			}
+			$this->getSocket()->enableTracking();
 			$this->getDb()->trackKey($this);
 			$this->_isTracking	= true;
 			$this->reTrack();
@@ -108,8 +106,10 @@ abstract class Tracking extends Cmds
 	}
 	protected function reTrack()
 	{
-		$cmdObj	= $this->get();
-		$data	= $cmdObj->exec(false);
+		$this->getDb()->selectDb();
+		$this->getSocket()->clientCaching(true)->exec(true);
+		$cmdObj		= $this->get();
+		$data		= $cmdObj->exec(false);
 		if ($cmdObj->getException() === null) {
 			$this->_data	= $data;
 			$this->_exists	= true;

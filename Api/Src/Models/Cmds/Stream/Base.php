@@ -29,7 +29,7 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	}
 	public function selectDb()
 	{
-		$this->getSocket()->selectDb($this->getDb()->getId());
+		$this->getDb()->selectDb();
 		return $this;
 	}
 }

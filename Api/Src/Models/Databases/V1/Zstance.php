@@ -4,6 +4,11 @@ namespace MTM\RedisApi\Models\Databases\V1;
 
 class Zstance extends Transactions
 {
+	public function selectDb()
+	{
+		$this->getSocket()->selectDb($this->getId());
+		return $this;
+	}
 	public function exists($key=null)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Exists\V1($this);

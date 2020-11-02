@@ -36,7 +36,6 @@ abstract class Sockets extends Lists
 		$rData	= $this->getSubSocket()->read($throw, $timeout);
 		$eTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
 		$rTime	= $timeout - (($eTime - $sTime) * 1000);
-		
 		if (strpos($rData, "message\r\n") !== false) {
 			
 			$head	= "*3\r\n$7\r\nmessage\r\n";

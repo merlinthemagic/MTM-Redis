@@ -38,8 +38,16 @@ abstract class Cmds extends Base
 	}
 	public function clientCaching($bool=false)
 	{
+		//make sure you have selected the right database before calling me
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Caching\V1($this);
 		$cmdObj->setCache($bool);
+		return $cmdObj;
+	}
+	public function clientTracking($enable=true)
+	{
+		//many more options
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Tracking\V1($this);
+		$cmdObj->setTrack($enable);
 		return $cmdObj;
 	}
 	public function quit()

@@ -18,12 +18,16 @@ abstract class Base extends \MTM\RedisApi\Models\Databases\Base
 		//dont want to throw in shutdown
 		$this->terminate(false);
 	}
+	public function getId()
+	{
+		return $this->_id;
+	}
 	public function getClient()
 	{
 		return $this->_clientObj;
 	}
-	public function getId()
+	public function getSocket()
 	{
-		return $this->_id;
+		return $this->getClient()->getMainSocket();
 	}
 }

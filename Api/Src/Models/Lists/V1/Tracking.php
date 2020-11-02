@@ -26,9 +26,7 @@ abstract class Tracking extends Cmds
 	public function enableTracking($create=false, $value=null)
 	{
 		if ($this->isTracking() === false) {
-			if ($this->getSocket()->isTracked() === false) {
-				$this->getSocket()->enableTracking();
-			}
+			$this->getSocket()->enableTracking();
 			$this->getDb()->trackKey($this);
 			$this->_isTracking	= true;
 			$this->reTrack();
@@ -57,6 +55,7 @@ abstract class Tracking extends Cmds
 						//Control yourself!
 					}
 				}
+				
 			} else {
 				if ($this->_updateCb !== null) {
 					try {
@@ -71,8 +70,8 @@ abstract class Tracking extends Cmds
 	}
 	protected function reTrack()
 	{
-		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Socket\Client\Caching\V1($this->getSocket());
-		$cmdObj->setCache(true)->exec(true);
+		$this->getDb()->selectDb();
+		$this->getSocket()->clientCaching(true)->exec(true);
 		$len	= $this->lLen()->exec(true);
 		if ($len > 0) {
 			$this->_exists	= true;
