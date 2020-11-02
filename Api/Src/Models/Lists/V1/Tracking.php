@@ -70,8 +70,7 @@ abstract class Tracking extends Cmds
 	}
 	protected function reTrack()
 	{
-		$this->getDb()->selectDb();
-		$this->getSocket()->clientCaching(true)->exec(true);
+		$this->getDb()->trackingPostCmd($this);
 		$len	= $this->lLen()->exec(true);
 		if ($len > 0) {
 			$this->_exists	= true;

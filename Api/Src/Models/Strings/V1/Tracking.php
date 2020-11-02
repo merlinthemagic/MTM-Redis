@@ -56,16 +56,10 @@ abstract class Tracking extends Cmds
 			$this->getDb()->trackKey($this);
 			$this->_isTracking	= true;
 			$this->reTrack();
-			if ($this->getExists() === false) {
-				if ($create === false) {
-					$this->disableTracking();
-					//update and delete does not take effect if the key does not exist
-					throw new \Exception("Key does not exist, tracking is not possible");
-				} else {
-					//create the key.. if it was not created in the meantime
-					$this->setNx($value)->exec(false);
-					$this->reTrack();
-				}
+			if ($this->getExists() === false && $create === true) {
+				//create the key.. if it was not created in the meantime
+				$this->setNx($value)->exec(false);
+				$this->reTrack();
 			}
 		}
 		return $this;
@@ -106,8 +100,7 @@ abstract class Tracking extends Cmds
 	}
 	protected function reTrack()
 	{
-		$this->getDb()->selectDb();
-		$this->getSocket()->clientCaching(true)->exec(true);
+		$this->getDb()->trackingPostCmd($this);
 		$cmdObj		= $this->get();
 		$data		= $cmdObj->exec(false);
 		if ($cmdObj->getException() === null) {

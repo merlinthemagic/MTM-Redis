@@ -11,7 +11,6 @@ class V1 extends Base
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
-			$this->preTracking();
 			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
@@ -20,7 +19,6 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		if (strpos($rData, "-ERR") === 0) {
-			$this->preTracking();
 			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 			return $this;
 		}
@@ -31,7 +29,7 @@ class V1 extends Base
 			return $this;
 		} else {
 			$data	= $this->getClient()->dataDecode(substr($rData, ($nPos+2), $cLen));
-			$this->setResponse($data)->postTracking();
+			$this->setResponse($data);
 		}
 		return $this;
 	}

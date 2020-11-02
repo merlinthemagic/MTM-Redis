@@ -6,6 +6,35 @@ abstract class Tracking extends Strings
 {
 	protected $_trackedKeys=array();
 	
+	public function trackingPreCmd($keyObj)
+	{
+		//issues commands to make sure the key maintains the correct client caching
+		//before a command is issued
+		if ($this->getSocket()->isTracked() === true) {
+			if ($keyObj->isTracking() === false) {
+				if ($this->getSocket()->getTrackMode() === "OPTOUT") {
+					$this->selectDb();
+					$this->getSocket()->clientCaching(false)->exec(true);
+				}
+			}
+		}
+		return $this;
+	}
+	public function trackingPostCmd($keyObj)
+	{
+		//issues commands to make sure the key maintains the correct client caching
+		//after a command was issued
+		//TODO: deal with multi commands
+		if ($this->getSocket()->isTracked() === true) {
+			if ($keyObj->isTracking() === true) {
+				if ($this->getSocket()->getTrackMode() === "OPTIN") {
+					$this->selectDb()->getSocket()->clientCaching(true)->exec(true);
+					$this->type($keyObj->getKey())->exec(true);
+				}
+			}
+		}
+		return $this;
+	}
 	public function trackKey($keyObj)
 	{
 		if (array_key_exists($keyObj->getKey(), $this->_trackedKeys) === false) {

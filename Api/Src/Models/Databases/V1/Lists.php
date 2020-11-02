@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Databases\V1;
 
-abstract class Lists extends Base
+abstract class Lists extends Cmds
 {
 	protected $_listObjs=array();
 	
