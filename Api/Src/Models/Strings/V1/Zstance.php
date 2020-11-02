@@ -1,6 +1,6 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Lists\V1;
+namespace MTM\RedisApi\Models\Strings\V1;
 
 class Zstance extends Tracking
 {

@@ -4,11 +4,6 @@ namespace MTM\RedisApi\Models\Databases\V1;
 
 class Zstance extends Transactions
 {
-	public function select()
-	{
-		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Select\V1($this);
-		return $cmdObj;
-	}
 	public function exists($key=null)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Exists\V1($this);

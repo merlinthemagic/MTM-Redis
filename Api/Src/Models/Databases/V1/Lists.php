@@ -42,8 +42,7 @@ abstract class Lists extends Base
 	{
 		if (array_key_exists($listObj->getGuid(), $this->_listObjs) === true) {
 			//list is still usable, its just empty and will be created with the next message
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Del\V1($this);
-			$cmdObj->setKey($listObj->getKey())->exec(false);
+			$this->delete($listObj->getKey())->exec(false);
 			return $this;
 		} else {
 			throw new \Exception("List does not belong to this database");

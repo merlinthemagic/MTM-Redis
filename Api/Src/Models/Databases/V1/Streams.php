@@ -41,8 +41,7 @@ abstract class Streams extends Lists
 	{
 		if (array_key_exists($streamObj->getGuid(), $this->_streamObjs) === true) {
 			//stream is not usable any longer
-			$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Del\V1($this);
-			$cmdObj->setKey($streamObj->getKey())->exec(false);
+			$this->delete($streamObj->getKey())->exec(false);
 			$this->removeStream($streamObj);
 			return $this;
 		} else {

@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Databases\V1;
 
-abstract class Tracking extends StringCmds
+abstract class Tracking extends Strings
 {
 	protected $_trackedKeys=array();
 	
@@ -10,7 +10,7 @@ abstract class Tracking extends StringCmds
 	{
 		if (array_key_exists($keyObj->getKey(), $this->_trackedKeys) === false) {
 			if (count($this->_trackedKeys) === 0) {
-				$this->getParent()->getChannel("__redis__:invalidate")->subscribe()->addCb($this, "trackedKeyCb");
+				$this->getClient()->getChannel("__redis__:invalidate")->subscribe()->addCb($this, "trackedKeyCb");
 			}
 			$this->_trackedKeys[$keyObj->getKey()]	= $keyObj;
 		}
@@ -21,7 +21,7 @@ abstract class Tracking extends StringCmds
 		if (array_key_exists($keyObj->getKey(), $this->_trackedKeys) === true) {
 			unset($this->_trackedKeys[$keyObj->getKey()]);
 			if (count($this->_trackedKeys) === 0) {
-				$this->getParent()->getChannel("__redis__:invalidate")->removeCb($this, "trackedKeyCb");
+				$this->getClient()->getChannel("__redis__:invalidate")->removeCb($this, "trackedKeyCb");
 			}
 		}
 		return $this;

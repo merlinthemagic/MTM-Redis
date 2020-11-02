@@ -1,8 +1,8 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Streams\V1;
+namespace MTM\RedisApi\Models\Strings\V1;
 
-abstract class Base extends \MTM\RedisApi\Models\Streams\Base
+abstract class Base extends \MTM\RedisApi\Models\Strings\Base
 {
 	protected $_dbObj=null;
 	protected $_key=null;
@@ -28,17 +28,10 @@ abstract class Base extends \MTM\RedisApi\Models\Streams\Base
 	}
 	public function getClient()
 	{
-		return $this->getDb()->getParent();
+		return $this->getDb()->getClient();
 	}
 	public function getSocket()
 	{
 		return $this->getClient()->getMainSocket();
-	}
-	public function getMsgObj()
-	{
-		$msgObj				= new \stdClass();
-		$msgObj->id			= null;
-		$msgObj->payload	= null;
-		return $msgObj;
 	}
 }

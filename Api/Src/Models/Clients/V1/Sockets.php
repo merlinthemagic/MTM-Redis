@@ -11,7 +11,7 @@ abstract class Sockets extends Lists
 	public function getMainSocket()
 	{
 		if ($this->_mainSockObj === null) {
-			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1($this);
+			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1\Zstance($this);
 			$this->_mainSockObj	= $sockObj->initialize();
 		}
 		return $this->_mainSockObj;
@@ -19,7 +19,7 @@ abstract class Sockets extends Lists
 	public function getSubSocket()
 	{
 		if ($this->_subSockObj === null) {
-			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1($this);
+			$sockObj			= new \MTM\RedisApi\Models\Sockets\V1\Zstance($this);
 			$this->_subSockObj	= $sockObj->initialize();
 		}
 		return $this->_subSockObj;

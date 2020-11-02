@@ -17,7 +17,7 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	}
 	public function getClient()
 	{
-		return $this->getDb()->getParent();
+		return $this->getDb()->getClient();
 	}
 	public function getSocket()
 	{

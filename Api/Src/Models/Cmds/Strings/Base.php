@@ -1,23 +1,23 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Lists;
+namespace MTM\RedisApi\Models\Cmds\Strings;
 
 abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 {
-	protected $_listObj=null;
+	protected $_stringObj=null;
 
-	public function __construct($listObj)
+	public function __construct($stringObj)
 	{
-		$this->_listObj	= $listObj;
+		$this->_stringObj	= $stringObj;
 		parent::__construct();
 	}
-	public function getList()
+	public function getString()
 	{
-		return $this->_listObj;
+		return $this->_stringObj;
 	}
 	public function getDb()
 	{
-		return $this->getList()->getDb();
+		return $this->getString()->getDb();
 	}
 	public function getClient()
 	{
@@ -34,7 +34,8 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	}
 	protected function preTracking()
 	{
-		if ($this->getList()->isTracking() === false) {
+		//certain commands must lead with a caching command in order to maintain caching state
+		if ($this->getString()->isTracking() === false) {
 			if ($this->getSocket()->getTrackMode() === "OPTOUT") {
 				$this->getSocket()->clientCaching(false)->exec(true);
 			}
@@ -43,10 +44,11 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Base
 	}
 	protected function postTracking()
 	{
-		if ($this->getList()->isTracking() === true) {
+		//certain commands must opt in again in order to maintain caching state
+		if ($this->getString()->isTracking() === true) {
 			if ($this->getSocket()->getTrackMode() === "OPTIN") {
 				$this->getSocket()->clientCaching(true)->exec(true);
-				$this->getList()->lLen()->exec(true);
+				$this->getString()->strLen()->exec(true);
 			}
 		}
 		return $this;

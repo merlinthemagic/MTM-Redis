@@ -1,24 +1,12 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Lists\Lpush;
+namespace MTM\RedisApi\Models\Cmds\Strings\Get;
 
 class V1 extends Base
 {
-	protected $_value=null;
-	
-	public function setValue($value)
-	{
-		$this->_value		= $value;
-		return $this;
-	}
-	public function getValue()
-	{
-		return $this->_value;
-	}
 	public function getRawCmd()
 	{
-		$data	= $this->getClient()->dataEncode($this->getValue());
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getList()->getKey(), $data));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getString()->getKey()));
 	}
 	public function exec($throw=false)
 	{
@@ -31,10 +19,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]))->postTracking();//total length of list
+		if (preg_match("/^\\\$([0-9]+)\r\n/si", $rData, $raw, PREG_OFFSET_CAPTURE) === 1) {
+			$data	= $this->getClient()->dataDecode(substr($rData, ($raw[1][1]+strlen($raw[1][0])+2), $raw[1][0]));
+			$this->setResponse($data)->postTracking();
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
+		} elseif (preg_match("/(^\\\$-1\r\n)$/si", $rData) === 1) {
+			$this->setResponse(null)->setException(new \Exception("Key does not exist: ".$this->getString()->getKey(), 7554)); //code used by key tracking
 		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
 			$this->setResponse(null)->setException(new \Exception("Error: ".$rData));
 		} else {

@@ -1,10 +1,11 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Lists\Lpush;
+namespace MTM\RedisApi\Models\Cmds\Strings\SetEx;
 
 class V1 extends Base
 {
 	protected $_value=null;
+	protected $_secs=null;
 	
 	public function setValue($value)
 	{
@@ -15,15 +16,23 @@ class V1 extends Base
 	{
 		return $this->_value;
 	}
+	public function setExpire($value)
+	{
+		$this->_secs		= $value;
+		return $this;
+	}
+	public function getExpire()
+	{
+		return $this->_secs;
+	}
 	public function getRawCmd()
 	{
 		$data	= $this->getClient()->dataEncode($this->getValue());
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getList()->getKey(), $data));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getString()->getKey(), $this->getExpire(), $data));
 	}
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
-			$this->preTracking();
 			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
@@ -31,11 +40,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]))->postTracking();//total length of list
+		if (preg_match("/^\+(OK)\r\n$/si", $rData, $raw) === 1) {
+			$this->setResponse($raw[1]);
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
-		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
+		} elseif (strpos($rData, "-ERR") === 0) {
 			$this->setResponse(null)->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);

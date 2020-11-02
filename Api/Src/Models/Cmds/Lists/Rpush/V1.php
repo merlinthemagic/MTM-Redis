@@ -23,6 +23,7 @@ class V1 extends Base
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
+			$this->preTracking();
 			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
@@ -31,7 +32,7 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));//total length of list
+			$this->setResponse(intval($raw[1]))->postTracking();//total length of list
 		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
 			$this->_isQueued	= true;
 		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
