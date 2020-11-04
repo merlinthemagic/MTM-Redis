@@ -27,6 +27,12 @@ abstract class Cmds extends Base
 		$cmdObj->setKey($key)->setExpire($secs);
 		return $cmdObj;
 	}
+	public function expireAt($key, $epoch)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\ExpireAt\V1($this);
+		$cmdObj->setKey($key)->setExpire($epoch);
+		return $cmdObj;
+	}
 	public function ttl($key)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Ttl\V1($this);
@@ -48,6 +54,12 @@ abstract class Cmds extends Base
 	public function type($key)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Type\V1($this);
+		$cmdObj->setKey($key);
+		return $cmdObj;
+	}
+	public function objectIdleTime($key)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Objects\IdleTime\V1($this);
 		$cmdObj->setKey($key);
 		return $cmdObj;
 	}

@@ -25,7 +25,7 @@ class V1 extends Base
 			throw new \Exception("Cannot add command, transaction is complete");
 		}
 	}
-	public function exec($throw=false)
+	public function exec($throw=false, $timeout=10000)
 	{
 		if ($this->isExec() === false) {
 			

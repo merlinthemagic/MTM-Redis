@@ -1,11 +1,11 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\Expire;
+namespace MTM\RedisApi\Models\Cmds\Db\ExpireAt;
 
 class V1 extends Base
 {
 	protected $_key=null;
-	protected $_secs=null;
+	protected $_epoch=null;
 	
 	public function setKey($key)
 	{
@@ -18,12 +18,12 @@ class V1 extends Base
 	}
 	public function setExpire($value)
 	{
-		$this->_secs		= $value;
+		$this->_epoch		= $value;
 		return $this;
 	}
 	public function getExpire()
 	{
-		return $this->_secs;
+		return $this->_epoch;
 	}
 	public function getRawCmd()
 	{

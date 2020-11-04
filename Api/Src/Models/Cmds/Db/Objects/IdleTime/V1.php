@@ -1,11 +1,10 @@
 <?php
 //© 2020 Martin Peter Madsen
-namespace MTM\RedisApi\Models\Cmds\Db\Expire;
+namespace MTM\RedisApi\Models\Cmds\Db\Objects\IdleTime;
 
 class V1 extends Base
 {
 	protected $_key=null;
-	protected $_secs=null;
 	
 	public function setKey($key)
 	{
@@ -16,32 +15,23 @@ class V1 extends Base
 	{
 		return $this->_key;
 	}
-	public function setExpire($value)
-	{
-		$this->_secs		= $value;
-		return $this;
-	}
-	public function getExpire()
-	{
-		return $this->_secs;
-	}
 	public function getRawCmd()
 	{
-		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getKey(), $this->getExpire()));
+		return $this->getClient()->getRawCmd($this->getBaseCmd(), array($this->getObjectCmd(), $this->getKey()));
 	}
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
-			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
+			$this->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:(1)\r\n$/si", $rData) === 1) {
-			$this->setResponse(true);
-		} elseif (preg_match("/(^\:0\r\n)$/si", $rData) === 1) {
+		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
+			$this->setResponse(intval($raw[1]));
+		} elseif (preg_match("/(^\\\$-1\r\n)$/si", $rData) === 1) {
 			$this->setException(new \Exception("Key does not exist: ".$this->getKey()));
 		} elseif (strpos($rData, "-ERR") === 0) {
 			$this->setException(new \Exception("Error: ".$rData));
