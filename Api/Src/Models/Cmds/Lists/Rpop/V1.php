@@ -12,6 +12,7 @@ class V1 extends Base
 	{
 		if ($this->isExec() === false) {
 			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
+			$this->getDb()->trackingPostCmd($this->getList());
 			$this->_isExec	= true;
 		}
 		return $this->getResponse($throw);

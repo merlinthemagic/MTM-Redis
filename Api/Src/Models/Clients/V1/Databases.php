@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Clients\V1;
 
-abstract class Databases extends Commands
+abstract class Databases extends Cmds
 {
 	protected $_dbObjs=array();
 	

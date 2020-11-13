@@ -5,10 +5,23 @@ namespace MTM\RedisApi\Models\Sockets\V1;
 class Zstance extends Tracking
 {
 	protected $_id=null;
-	
+	protected $_inMulti=false;
+
 	public function getId()
 	{
 		return $this->_id;
+	}
+	public function inMulti()
+	{
+		return $this->_inMulti;
+	}
+	public function setMulti($bool)
+	{
+		if (is_bool($bool) === false) {
+			throw new \Exception("Invalid input");
+		}
+		$this->_inMulti		= $bool;
+		return $this;
 	}
 	public function write($strCmd)
 	{

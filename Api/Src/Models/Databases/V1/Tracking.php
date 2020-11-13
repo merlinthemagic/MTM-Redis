@@ -11,10 +11,15 @@ abstract class Tracking extends Strings
 		//issues commands to make sure the key maintains the correct client caching
 		//before a command is issued
 		if ($this->getSocket()->isTracked() === true) {
-			if ($keyObj->isTracking() === false) {
-				if ($this->getSocket()->getTrackMode() === "OPTOUT") {
-					$this->selectDb();
-					$this->getSocket()->clientCaching(false)->exec(true);
+			if ($this->getSocket()->inMulti() === false) {
+				if ($keyObj->isTracking() === false) {
+					if ($this->getSocket()->getTrackMode() === "OPTOUT") {
+						$this->selectDb()->getSocket()->clientCaching(false)->exec(true);
+					}
+				} else {
+					if ($this->getSocket()->getTrackMode() === "OPTIN") {
+						$this->selectDb()->getSocket()->clientCaching(true)->exec(true);
+					} 
 				}
 			}
 		}
@@ -26,10 +31,12 @@ abstract class Tracking extends Strings
 		//after a command was issued
 		//TODO: deal with multi commands
 		if ($this->getSocket()->isTracked() === true) {
-			if ($keyObj->isTracking() === true) {
-				if ($this->getSocket()->getTrackMode() === "OPTIN") {
-					$this->selectDb()->getSocket()->clientCaching(true)->exec(true);
-					$this->type($keyObj->getKey())->exec(true);
+			if ($this->getSocket()->inMulti() === false) {
+				if ($keyObj->isTracking() === true) {
+					if ($this->getSocket()->getTrackMode() === "OPTIN") {
+						$this->selectDb()->getSocket()->clientCaching(true)->exec(true);
+						$this->type($keyObj->getKey())->exec(true);
+					}
 				}
 			}
 		}

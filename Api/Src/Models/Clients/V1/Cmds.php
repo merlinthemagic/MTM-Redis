@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Clients\V1;
 
-abstract class Commands extends Channels
+abstract class Cmds extends Channels
 {
 	public function newMulti($cmdObjs=array())
 	{
@@ -44,5 +44,10 @@ abstract class Commands extends Channels
 		$cmdObj->setExp($exp);
 		return $cmdObj;
 	}
-	
+	public function flushAll($async=false)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Client\Flush\V1($this);
+		$cmdObj->setAsync($async);
+		return $cmdObj;
+	}
 }

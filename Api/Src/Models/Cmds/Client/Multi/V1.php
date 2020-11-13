@@ -27,6 +27,12 @@ class V1 extends Base
 			
 			try {
 				
+				if ($this->getException() === null) {
+					$this->getSocket()->setMulti(true);
+				} else {
+					throw $this->getException();
+				}
+				
 				foreach ($this->_cmdObjs as $cmdObj) {
 					if ($cmdObj->isExec() === true) {
 						throw new \Exception("Command already executed: ".$cmdObj->getBaseCmd());

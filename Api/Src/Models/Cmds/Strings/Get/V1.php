@@ -11,6 +11,7 @@ class V1 extends Base
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
+			$this->getDb()->trackingPreCmd($this->getString());
 			$this->selectDb()->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}

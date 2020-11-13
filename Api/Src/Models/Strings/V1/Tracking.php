@@ -13,26 +13,25 @@ abstract class Tracking extends Cmds
 	public function getData()
 	{
 		if ($this->isTracking() === false) {
-			$this->reTrack();
+			$this->refreshCache();
 		}
 		return $this->_data;
 	}
 	public function getExists()
 	{
 		if ($this->isTracking() === false) {
-			$this->reTrack();
+			$this->refreshCache();
 		}
 		return $this->_exists;
 	}
-	public function setData($data, $timeout=2000)
+	public function setData($data)
 	{
-		$watchObj		= $this->getDb()->watch($this->getKey());
-		$cmdObj			= $this->set($data);
-		$wmObj			= $this->getClient()->newWatchMulti(array($watchObj), array($cmdObj));
-		$wmObj->exec(true, $timeout);
-		//fill data and if tracking resubscribe to cache. if no loop is on we dont get a message the key was updated
-		//but if using "optin" we still get unsubscribed
-		$this->reTrack();
+		$this->set($data)->exec(true);
+		$cData	= $this->refreshCache();
+		if ($cData !== $data) {
+			//data was replaced right after we set it
+			$this->trackInvalidated();
+		}
 		return $this;
 	}
 	public function setUpdateCb($obj, $method)
@@ -77,7 +76,7 @@ abstract class Tracking extends Cmds
 	{
 		if ($this->isTracking() === true) {
 			$curExists	= $this->_exists;
-			$this->reTrack();
+			$this->refreshCache();
 			if ($curExists === true && $this->_exists === false) {
 				if ($this->_delCb !== null) {
 					try {
@@ -98,10 +97,9 @@ abstract class Tracking extends Cmds
 		}
 		return $this;
 	}
-	protected function reTrack()
+	protected function refreshCache()
 	{
-		$this->getDb()->trackingPostCmd($this);
-		$cmdObj		= $this->get();
+		$cmdObj		= $this->get(); //recaches on its own
 		$data		= $cmdObj->exec(false);
 		if ($cmdObj->getException() === null) {
 			$this->_data	= $data;

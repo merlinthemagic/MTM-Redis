@@ -12,6 +12,7 @@ class V1 extends Base
 	{
 		if ($this->isExec() === false) {
 			$this->parse($this->getSocket()->write($this->getRawCmd())->read(true));
+			$this->getSocket()->setMulti(false);
 		}
 		return $this->getResponse($throw);
 	}

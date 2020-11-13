@@ -9,7 +9,13 @@ abstract class Cmds extends Base
 		$this->getSocket()->selectDb($this->getId());
 		return $this;
 	}
-	public function exists($key=null)
+	public function flush($async=false)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Flush\V1($this);
+		$cmdObj->setAsync($async);
+		return $cmdObj;
+	}
+	public function exists($key)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Exists\V1($this);
 		$cmdObj->setKey($key);
