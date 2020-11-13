@@ -4,7 +4,7 @@ namespace MTM\RedisApi\Models\Cmds\Client\Flush;
 
 abstract class Base extends \MTM\RedisApi\Models\Cmds\Db\Base
 {
-	protected $_baseCmd="FLUSH";
+	protected $_baseCmd="FLUSHALL";
 
 	public function getBaseCmd()
 	{

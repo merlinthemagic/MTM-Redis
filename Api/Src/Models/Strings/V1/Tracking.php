@@ -48,18 +48,13 @@ abstract class Tracking extends Cmds
 	{
 		return $this->_isTracking;
 	}
-	public function enableTracking($create=false, $value=null)
+	public function enableTracking()
 	{
 		if ($this->isTracking() === false) {
 			$this->getSocket()->enableTracking();
 			$this->getDb()->trackKey($this);
 			$this->_isTracking	= true;
-			$this->reTrack();
-			if ($this->getExists() === false && $create === true) {
-				//create the key.. if it was not created in the meantime
-				$this->setNx($value)->exec(false);
-				$this->reTrack();
-			}
+			$this->refreshCache();
 		}
 		return $this;
 	}
