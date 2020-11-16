@@ -10,9 +10,4 @@ abstract class Base extends \MTM\RedisApi\Models\Cmds\Db\Base
 	{
 		return $this->_baseCmd;
 	}
-	public function selectDb()
-	{
-		//overide the select method, we are used for that
-		throw new \Exception("Select not allowed for select command");
-	}
 }

@@ -6,6 +6,7 @@ class Zstance extends Tracking
 {
 	protected $_id=null;
 	protected $_inMulti=false;
+	protected $_sockObj=null;
 
 	public function getId()
 	{

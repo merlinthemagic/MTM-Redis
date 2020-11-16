@@ -21,7 +21,7 @@ class V1 extends Base
 		if (preg_match("/^\+(PONG)\r\n$/si", $rData, $raw) === 1) {
 			$this->setResponse($raw[1]);
 		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
+			$this->setException(new \Exception("Error: ".$rData));
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

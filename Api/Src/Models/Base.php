@@ -10,7 +10,7 @@ abstract class Base
 	
 	public function __construct()
 	{
-		$this->_guid	=  \MTM\Utilities\Factories::getGuids()->getV4()->get(false);
+		$this->_guid	= \MTM\Utilities\Factories::getGuids()->getV4()->get(false);
 	}
 	public function getGuid()
 	{

@@ -14,6 +14,12 @@ abstract class Cmds extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\StrLen\V1($this);
 		return $cmdObj;
 	}
+	public function idleTime()
+	{
+		//how long since the last read or write?
+		$cmdObj		= $this->getDb()->objectIdleTime($this->getKey());
+		return $cmdObj;
+	}
 	public function set($value=null)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\Set\V1($this);
