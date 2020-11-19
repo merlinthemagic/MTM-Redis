@@ -13,6 +13,7 @@ class Get extends Set
 		}
 		$dbObj		= $reqObj->getClient()->getRedis()->getDatabase($reqObj->getReq("dbId"));
 		$keyObj		= $dbObj->getString($reqObj->getReq("key"));
+		
 		$reqObj->setResp($keyObj->get()->exec(true))->send();
 	}
 }
