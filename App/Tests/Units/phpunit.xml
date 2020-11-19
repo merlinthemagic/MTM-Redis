@@ -1,0 +1,7 @@
+<phpunit bootstrap="../../Src/Enable.php">
+	<testsuites>
+		<testsuite name="factories">
+			<file>Factories/SomethingV1.php</file>
+		</testsuite>
+	</testsuites>
+</phpunit>

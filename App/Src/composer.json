@@ -1,0 +1,18 @@
+{
+	"name" : "merlinthemagic/mtm-redis-app",
+	"type" : "library",
+	"description" : "Redis App",
+	"version" : "0.0.1",
+	"homepage" : "https://github.com/merlinthemagic/MTM-Redis",
+	"authors" : [{
+			"name" : "Martin Peter Madsen",
+			"email" : "dev@martinpetermadsen.com",
+			"role" : "Developer"
+		}
+	],
+	"require" : {
+		"php" : ">=7.4.11",
+		"merlinthemagic/mtm-utilities" : ">=0.0.1"
+	},
+	"minimum-stability" : "dev"
+}

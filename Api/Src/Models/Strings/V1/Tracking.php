@@ -7,8 +7,8 @@ abstract class Tracking extends Cmds
 	protected $_isTracking=false;
 	protected $_exists=null;
 	protected $_data=null;
-	protected $_updateCb=null;
-	protected $_delCb=null;
+	protected $_updateCbs=array();
+	protected $_delCbs=array();
 	
 	public function getData()
 	{
@@ -36,12 +36,32 @@ abstract class Tracking extends Cmds
 	}
 	public function setUpdateCb($obj, $method)
 	{
-		$this->_updateCb	= array($obj, $method);
+		$this->_updateCbs[]	= array($obj, $method);
+		return $this;
+	}
+	public function removeUpdateCb($obj, $method)
+	{
+		foreach ($this->_updateCbs as $index => $cb) {
+			if ($cb[0] === $obj && $cb[1] === $method) {
+				unset($this->_updateCbs[$index]);
+				break;
+			}
+		}
 		return $this;
 	}
 	public function setDeleteCb($obj, $method)
 	{
-		$this->_delCb	= array($obj, $method);
+		$this->_delCbs[]	= array($obj, $method);
+		return $this;
+	}
+	public function removeDeleteCb($obj, $method)
+	{
+		foreach ($this->_delCbs as $index => $cb) {
+			if ($cb[0] === $obj && $cb[1] === $method) {
+				unset($this->_delCbs[$index]);
+				break;
+			}
+		}
 		return $this;
 	}
 	public function isTracking()
@@ -73,17 +93,17 @@ abstract class Tracking extends Cmds
 			$curExists	= $this->_exists;
 			$this->refreshCache();
 			if ($curExists === true && $this->_exists === false) {
-				if ($this->_delCb !== null) {
+				foreach ($this->_delCbs as $cb) {
 					try {
-						call_user_func_array($this->_delCb, array($this));
+						call_user_func_array($cb, array($this));
 					} catch (\Exception $e) {
 						//Control yourself!
 					}
 				}
 			} else {
-				if ($this->_updateCb !== null) {
+				foreach ($this->_updateCbs as $cb) {
 					try {
-						call_user_func_array($this->_updateCb, array($this));
+						call_user_func_array($cb, array($this));
 					} catch (\Exception $e) {
 						//Control yourself!
 					}
