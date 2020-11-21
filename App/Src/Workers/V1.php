@@ -17,13 +17,15 @@ class V1 extends Base
 	protected $_clientObjs=array();
 	
 	protected $_reqCb=null;
+	protected $_initConnCb=null;
+	protected $_termConnCb=null;
 
 	public function setWssConfig($ip, $port, $certObj=null)
 	{
 		$this->_wsIp		= $ip;
 		$this->_wsPort		= $port;
 		$this->_wsCert		= $certObj;
-		$this->setExceptionCb(\DC\SCC\Facts::getLogging(), "exception");
+		$this->setExceptionCb(\MTM\Redis\Facts::getLogging(), "exception");
 		\MTM\Redis\Facts::getProcess()->addLoopCb($this, "pollClients");
 		return $this;
 	}
@@ -41,6 +43,16 @@ class V1 extends Base
 		$this->_reqCb	= array($obj, $method);
 		return $this;
 	}
+	public function setInitClientCb($obj, $method)
+	{
+		$this->_initConnCb	= array($obj, $method);
+		return $this;
+	}
+	public function setTermClientCb($obj, $method)
+	{
+		$this->_termConnCb	= array($obj, $method);
+		return $this;
+	}
 	public function getClients()
 	{
 		return $this->_clientObjs;
@@ -52,6 +64,7 @@ class V1 extends Base
 		foreach ($this->getClients() as $cObj) {
 		
 			try {
+				
 				$count		+= $cObj->getRedis()->pollSub();
 				foreach ($cObj->getSocket()->getMessages() as $msg) {
 					
@@ -62,17 +75,21 @@ class V1 extends Base
 					} else {
 						$count++;
 						$msgObj	= json_decode($msg);
+						
+						
 						if ($msgObj !== false) {
 							if (
 								$msgObj instanceof \stdClass === true
 								&& $msgObj->version === 1
+								&& property_exists($msgObj, "type") === true
 							) {
 								if ($msgObj->type == "request") {
 									
-									$reqObj		= \MTM\Redis\Facts::getMessages()->getIngressV1();
-									$reqObj->parseIngress($msgObj)->setClient($cObj);
-
+									$reqObj		= \MTM\Redis\Facts::getMessages()->getIngressV1($cObj);
+									
 									try {
+
+										$reqObj->parseIngress($msgObj);
 										
 										if ($this->_reqCb !== null) {
 											if (call_user_func_array($this->_reqCb, array($reqObj)) === true) {
@@ -88,20 +105,13 @@ class V1 extends Base
 									}
 										
 								} elseif ($msgObj->type == "response") {
-									echo "\n <code><pre> \nClass:  ".get_class($this)." \nMethod:  ".__FUNCTION__. "  \n";
-									//var_dump($_SERVER);
-									echo "\n 2222 \n";
-									//print_r($_GET);
-									echo "\n 3333 \n";
-									print_r($msgObj);
-									echo "\n ".time()."</pre></code> \n ";
-									die("end");
-// 									$reqObj		= \DC\SCC\Facts::getMessages()->getEgressById($msgObj->msgId, false);
-// 									if ($reqObj !== null) {
-// 										$reqObj->socketResp($msgObj);
-// 									} else {
-// 										//message is expired, need logging
-// 									}
+									
+									$reqObj		= \MTM\Redis\Facts::getMessages()->getEgressById($msgObj->msgId, false);
+									if ($reqObj !== null) {
+										$reqObj->socketResp($msgObj);
+									} else {
+										//message is expired, need logging
+									}
 									
 								} else {
 									throw new \Exception("Not handled for message type: ".$msgObj->type);
@@ -130,7 +140,6 @@ class V1 extends Base
 			if ($this->_wsCert === null) {
 				$sockObj->setConnection("tcp", $this->_wsIp, $this->_wsPort);
 			} else {
-				
 				$sockObj->setConnection("tls", $this->_wsIp, $this->_wsPort);
 				$sockObj->setSslConnection($this->_wsCert);
 			}
@@ -149,7 +158,20 @@ class V1 extends Base
 			$redisObj	= \MTM\Redis\Facts::getRedis()->getClient($this->_redisHost, $this->_redisPort, $this->_redisAuth, $this->_redisCert, $this->_redisTimeout);
 			$redisObj->setDataEncoder("php-serializer");
 			$clientObj	= \MTM\Redis\Facts::getClients()->getV1($sockObj, $redisObj);
-			$this->_clientObjs[$uuid]	= $clientObj;
+			
+			try {
+				
+				if ($this->_initConnCb !== null) {
+					if (call_user_func_array($this->_initConnCb, array($clientObj)) !== true) {
+						throw new \Exception("Connection was denied");
+					}
+				}
+				
+				$this->_clientObjs[$uuid]	= $clientObj;
+				
+			} catch (\Exception $e) {
+				$this->callException($e);
+			}
 		}
 		return true;
 	}
@@ -159,6 +181,14 @@ class V1 extends Base
 		if (array_key_exists($uuid, $this->_clientObjs) === true) {
 			$clientObj	= $this->_clientObjs[$uuid];
 			unset($this->_clientObjs[$uuid]);
+			try {
+				if ($this->_termConnCb !== null) {
+					call_user_func_array($this->_termConnCb, array($clientObj));
+				}
+			} catch (\Exception $e) {
+				$this->callException($e);
+			}
+			
 			$clientObj->terminate(false);
 		}
 		return true;

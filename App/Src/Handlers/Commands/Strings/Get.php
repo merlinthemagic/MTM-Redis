@@ -11,9 +11,10 @@ class Get extends Set
 		} elseif ($reqObj->getReq("key") === null) {
 			throw new \Exception("Database key attribute is mandatory");
 		}
+		$reqObj->getClient()->getAuth(true, "GET", $reqObj->getReq("dbId"), $reqObj->getReq("key"));
+		
 		$dbObj		= $reqObj->getClient()->getRedis()->getDatabase($reqObj->getReq("dbId"));
 		$keyObj		= $dbObj->getString($reqObj->getReq("key"));
-		
 		$reqObj->setResp($keyObj->get()->exec(true))->send();
 	}
 }

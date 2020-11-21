@@ -11,6 +11,7 @@ class Set extends \MTM\Redis\Handlers\Base
 		} elseif ($reqObj->getReq("key") === null) {
 			throw new \Exception("Database key attribute is mandatory");
 		}
+		$reqObj->getClient()->getAuth(true, "CLIENT CACHING", $reqObj->getReq("dbId"), $reqObj->getReq("key"));
 		$dbObj		= $reqObj->getClient()->getRedis()->getDatabase($reqObj->getReq("dbId"));
 		$keyObj		= $dbObj->getString($reqObj->getReq("key"));
 		//need to bind the socket to the update and delete call backs
@@ -25,6 +26,7 @@ class Set extends \MTM\Redis\Handlers\Base
 		} elseif ($reqObj->getReq("key") === null) {
 			throw new \Exception("Database key attribute is mandatory");
 		}
+		$reqObj->getClient()->getAuth(true, "CLIENT CACHING", $reqObj->getReq("dbId"), $reqObj->getReq("key"));
 		$dbObj		= $reqObj->getClient()->getRedis()->getDatabase($reqObj->getReq("dbId"));
 		$keyObj		= $dbObj->getString($reqObj->getReq("key"));
 		$reqObj->getClient()->unTrackKey($keyObj);

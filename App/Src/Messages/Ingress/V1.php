@@ -25,9 +25,19 @@ class V1 extends Base
 	}
 	public function parseIngress($msgObj)
 	{
-		$this->setMsgId($msgObj->msgId)->setReq($msgObj->data);
+		$this->setMsgId($msgObj->msgId);
+		if (property_exists($msgObj, "hash") === false) {
+			throw new \Exception("Hash missing");
+		}
+		$hash	= $msgObj->hash;
+		unset($msgObj->hash);
+
+		$sign	= hash("sha256", json_encode($msgObj).$this->getClient()->getAuthSecret());
+		if ($hash !== $sign) {
+			throw new \Exception("Hash mismatch");
+		}
+		$this->setReq($msgObj->data)->setTimeout(intval($msgObj->timeout));
 		$this->setL1($msgObj->rL1)->setL2($msgObj->rL2)->setL3($msgObj->rL3)->setL4($msgObj->rL4);
-		$this->setTimeout(intval(round(($msgObj->expire - \MTM\Utilities\Factories::getTime()->getMicroEpoch()) * 1000)));
 		return $this;
 	}
 	public function getResponseObj()
@@ -50,7 +60,10 @@ class V1 extends Base
 	public function send()
 	{
 		if ($this->isRespDone() === false) {
-			$this->getClient()->getSocket()->sendMessage(json_encode($this->getResponseObj(), JSON_PRETTY_PRINT));
+			$rTime	= ($this->getRecvTime() + ($this->getTimeout() / 1000)) - \MTM\Utilities\Factories::getTime()->getMicroEpoch();
+			if ($rTime > 0) {
+				$this->getClient()->getSocket()->sendMessage(json_encode($this->getResponseObj(), JSON_PRETTY_PRINT));
+			}
 			$this->setRespDone();
 		}
 		return $this;

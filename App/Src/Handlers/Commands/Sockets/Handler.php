@@ -6,7 +6,11 @@ class Handler extends Get
 {
 	public function handle($reqObj)
 	{
-		if ($reqObj->getL3() == "Client") {
+		if ($reqObj->getL3() == "Get") {
+			if ($reqObj->getL4() == "Ping") {
+				return $this->getPing($reqObj);
+			}
+		} elseif ($reqObj->getL3() == "Client") {
 			if ($reqObj->getL4() == "Id") {
 				return $this->getClientId($reqObj);
 			}

@@ -4,7 +4,7 @@ namespace MTM\Redis\Messages\Egress;
 
 abstract class Base extends \MTM\Redis\Messages\Base
 {
-	protected $_respCb=null;
+	protected $_respCb=array();
 
 	public function __construct()
 	{
@@ -13,14 +13,14 @@ abstract class Base extends \MTM\Redis\Messages\Base
 	}
 	public function setRespCb($obj, $method)
 	{
-		$this->_respCb	= array($obj, $method);
+		$this->_respCb[]	= array($obj, $method);
 		return $this;
 	}
 	public function respCb()
 	{
-		if ($this->_respCb !== null) {
+		foreach ($this->_respCb as $cb) {
 			try {
-				call_user_func_array($this->_respCb, array($this));
+				call_user_func_array($cb, array($this));
 			} catch (\Exception $e) {
 			}
 		}
