@@ -55,7 +55,20 @@ class V1 extends Base
 	}
 	public function getClients()
 	{
-		return $this->_clientObjs;
+		return array_values($this->_clientObjs);
+	}
+	public function getClientById($id, $throw=false)
+	{
+		foreach ($this->getClients() as $cObj) {
+			if ($cObj->getClientId() === $id) {
+				return $cObj;
+			}
+		}
+		if ($throw === true) {
+			throw new \Exception("Client does not exist with ID: ".$id);
+		} else {
+			return null;
+		}
 	}
 	public function pollClients()
 	{
@@ -75,8 +88,7 @@ class V1 extends Base
 					} else {
 						$count++;
 						$msgObj	= json_decode($msg);
-						
-						
+
 						if ($msgObj !== false) {
 							if (
 								$msgObj instanceof \stdClass === true
@@ -90,15 +102,12 @@ class V1 extends Base
 									try {
 
 										$reqObj->parseIngress($msgObj);
-										
 										if ($this->_reqCb !== null) {
-											if (call_user_func_array($this->_reqCb, array($reqObj)) === true) {
-												\MTM\Redis\Facts::getHandlers()->handle($reqObj);
-											} else {
+											if (call_user_func_array($this->_reqCb, array($reqObj)) !== true) {
 												throw new \Exception("Request was denied");
 											}
 										}
-
+										\MTM\Redis\Facts::getHandlers()->handle($reqObj);
 									} catch (\Exception $e) {
 										$reqObj->setException($e)->send();
 										$this->callException($e);
