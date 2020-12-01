@@ -41,7 +41,7 @@ class Zstance extends Sockets
 		$reSize			= intval(substr($this->_pData, 1, $nPos));
 		$this->_pData	= substr($this->_pData, ($nPos+2));
 		for ($x=0; $x<$reSize; $x++) {
-			$reData[]	= $this->parser($rData);
+			$reData[]	= $this->parser();
 		}
 		return $reData;
 	}

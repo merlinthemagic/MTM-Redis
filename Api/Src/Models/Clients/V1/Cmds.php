@@ -50,4 +50,9 @@ abstract class Cmds extends Channels
 		$cmdObj->setAsync($async);
 		return $cmdObj;
 	}
+	public function newConfigGetDatabases()
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Client\Config\Get\Databases\V1($this);
+		return $cmdObj;
+	}
 }

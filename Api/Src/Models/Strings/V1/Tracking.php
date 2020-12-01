@@ -34,6 +34,12 @@ abstract class Tracking extends Cmds
 		}
 		return $this;
 	}
+	public function setDataNx($data)
+	{
+		$this->setNx($data)->exec(false);
+		$this->refreshCache();
+		return $this;
+	}
 	public function setUpdateCb($obj, $method)
 	{
 		$this->_updateCbs[]	= array($obj, $method);

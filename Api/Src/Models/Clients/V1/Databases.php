@@ -5,6 +5,7 @@ namespace MTM\RedisApi\Models\Clients\V1;
 abstract class Databases extends Cmds
 {
 	protected $_dbObjs=array();
+	protected $_dbCount=null;
 	
 	public function getDatabases()
 	{
@@ -49,5 +50,13 @@ abstract class Databases extends Cmds
 		} else {
 			return null;
 		}
+	}
+	public function getDatabaseCount()
+	{
+		if ($this->_dbCount === null) {
+			//can cache because it requires a restart to change
+			$this->_dbCount	= $this->newConfigGetDatabases()->exec(true);
+		}
+		return $this->_dbCount;
 	}
 }
