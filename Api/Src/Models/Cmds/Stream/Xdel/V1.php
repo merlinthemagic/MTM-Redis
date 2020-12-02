@@ -29,13 +29,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-		}
-		$count	= $this->getClient()->parseResponse($rData);
-		$this->setResponse($count);
-		if ($count === 0) {
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
+		} elseif (is_int($rVal) === true && $rVal === 0) {
 			$this->setException(new \Exception("Id did not exist: ".$this->getId()));
+		} else {
+			$this->setResponse($rVal);
 		}
 		return $this;
 	}

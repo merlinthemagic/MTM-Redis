@@ -43,14 +43,15 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\+(OK)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse($raw[1]);
-		} elseif (preg_match("/^\\\$-1\r\n$/si", $rData, $raw) === 1) {
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal === "OK") {
+			$this->setResponse($rVal);
+		} elseif ($rVal === false) {
 			$this->setException(new \Exception("Key exists, cannot create", 8865));//code use in string to get lock
-		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
+		} elseif ($rVal === "QUEUED") {
 			$this->_isQueued	= true;
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

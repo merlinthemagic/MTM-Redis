@@ -19,14 +19,14 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		$arr	= $this->getClient()->parseResponse($rData);
-		if ($arr[0] == "databases") {
-			if (ctype_digit($arr[1]) === true) {
-				$this->setResponse(intval($arr[1]));
-			} else {
-				throw new \Exception("Not handled for return: ".$arr[1]);
-			}
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
+		} elseif ($arr[0] != "databases") {
+			$this->setException(new \Exception("Not handled for return: ".$arr[0]));
+		} elseif (ctype_digit($arr[1]) !== true) {
+			$this->setException(new \Exception("Not handled for return: ".$arr[1]));
 		} else {
-			throw new \Exception("Not handled for return: ".$arr[0]);
+			$this->setResponse(intval($arr[1]));
 		}
 		return $this;
 	}

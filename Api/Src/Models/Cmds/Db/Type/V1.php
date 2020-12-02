@@ -29,10 +29,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\+(string|list|set|zset|hash|stream|none)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse($raw[1]);
-		} elseif (strpos($rData, "-ERR") === 0) {
-			throw new \Exception("Error: ".$rData);
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (in_array($rVal, array("string", "list", "set", "zset", "hash", "stream", "none")) === true) {
+			$this->setResponse($rVal);
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

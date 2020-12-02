@@ -19,17 +19,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-			return $this;
-		}
-		$nPos	= strpos($rData, "\r\n");
-		$cLen	= intval(substr($rData, 1, ($nPos-1)));
-		if ($cLen < 0) {
-			$this->setResponse(null)->setException(new \Exception("List is empty"));
-			return $this;
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
+		} elseif ($rVal === false) {
+			$this->setException(new \Exception("List is empty"));
 		} else {
-			$data	= $this->getClient()->dataDecode(substr($rData, ($nPos+2), $cLen));
+			$data	= $this->getClient()->dataDecode($rVal);
 			$this->setResponse($data);
 		}
 		return $this;

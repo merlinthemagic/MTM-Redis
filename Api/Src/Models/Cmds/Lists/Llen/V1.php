@@ -18,10 +18,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (is_int($rVal) === true) {
+			$this->setResponse($rVal);
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

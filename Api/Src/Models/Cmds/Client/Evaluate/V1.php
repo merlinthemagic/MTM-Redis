@@ -24,11 +24,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse($rData)->setException(new \Exception("Error: ".$rData));
-			return $this;
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
-			$this->setResponse($rData);
+			$this->setResponse($rVal);
 		}
 		return $this;
 	}

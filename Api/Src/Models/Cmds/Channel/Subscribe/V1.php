@@ -18,55 +18,18 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-			return $this;
+		$arr	= $this->getClient()->parseResponse($rData);
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
+		} elseif ($arr[0] != "subscribe") {
+			$this->setException(new \Exception("Not handled for return: ".$arr[0]));
+		} elseif ($arr[1] != $this->getChannel()->getName()) {
+			$this->setException(new \Exception("Not handled for return: ".$arr[1]));
+		} elseif (is_int($arr[2]) === false) {
+			$this->setException(new \Exception("Not handled for return: ".$arr[2]));
+		} else {
+			$this->setResponse($arr[2]);
 		}
-		$nPos	= strpos($rData, "\r\n");
-		$cLen	= intval(substr($rData, 1, ($nPos-1)));
-		if ($cLen !== 3) {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned incorrect parameter count: ".$cLen));
-			return $this;
-		}
-		$rData		= substr($rData, ($nPos+2));
-		$nPos		= strpos($rData, "\r\n");
-		$cLen		= intval(substr($rData, 1, ($nPos-1)));
-		if ($cLen !== 9) {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned incorrect command length: ".$cLen));
-			return $this;
-		}
-		$rData		= substr($rData, ($nPos+2));
-		$nPos		= strpos($rData, "\r\n");
-		$strCmd		= substr($rData, 0, $nPos);
-		if ($strCmd !== "subscribe") {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned incorrect command: ".$strCmd));
-			return $this;
-		}
-		$rData		= substr($rData, ($nPos+2));
-		$nPos		= strpos($rData, "\r\n");
-		$cLen		= intval(substr($rData, 1, ($nPos-1)));
-		if ($cLen !== strlen($this->getChannel()->getName())) {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned incorrect name length: ".$cLen));
-			return $this;
-		}
-		$rData		= substr($rData, ($nPos+2));
-		$nPos		= strpos($rData, "\r\n");
-		$name		= substr($rData, 0, $nPos);
-		if ($name !== $this->getChannel()->getName()) {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned incorrect name: ".$name));
-			return $this;
-		}
-		$rData		= substr($rData, ($nPos+2));
-		$nPos		= strpos($rData, "\r\n");
-		$cLen		= substr($rData, 1, ($nPos-1));
-		$rData		= substr($rData, ($nPos+2));
-		if ($rData != "") {
-			$this->setResponse(false)->setException(new \Exception("Subscribe returned extra data: ".$rData));
-			return $this;
-		} elseif (ctype_digit($cLen) === true) {
-			//number of total subscribers
-			$this->setResponse(intval($cLen));
-			return $this;
-		}
+		return $this;
 	}
 }

@@ -18,10 +18,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\+(PONG)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse($raw[1]);
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal === "PONG") {
+			$this->setResponse($rVal);
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

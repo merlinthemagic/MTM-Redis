@@ -29,12 +29,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));
-		} elseif (preg_match("/(^\:-2\r\n)$/si", $rData) === 1) {
-			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey()));
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (is_int($rVal) === true) {
+			$this->setResponse($rVal);
+		} elseif ($rVal === -2) {
+			$this->setException(new \Exception("Key does not exist: ".$this->getKey()));
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

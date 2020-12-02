@@ -31,12 +31,13 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:([0-9]+)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));//total length of list
-		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (is_int($rVal) === true) {
+			$this->setResponse($rVal);
+		} elseif ($rVal === "QUEUED") {
 			$this->_isQueued	= true;
-		} elseif (strpos($rData, "-ERR") === 0 || strpos($rData, "-WRONGTYPE") === 0) {
-			$this->setResponse(null)->setException(new \Exception("Error: ".$rData));
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

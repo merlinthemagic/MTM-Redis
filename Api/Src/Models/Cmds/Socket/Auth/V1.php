@@ -29,13 +29,11 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/(^\+OK\r\n)$/si", $rData) === 1) {
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if ($rVal === "OK") {
 			$this->setResponse(true);
-		} elseif (strpos($rData, "-WRONGPASS") === 0) {
-			throw new \Exception("Invalid password: ".$rData);
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-			throw new \Exception("Error: ".$rData);
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

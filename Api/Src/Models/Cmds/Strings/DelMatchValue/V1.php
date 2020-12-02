@@ -36,13 +36,7 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-			return $this;
-		}
-		$nPos	= strpos($rData, "\r\n");
-		$cLen	= intval(substr($rData, 1, ($nPos-1)));
-		$rData	= substr($rData, ($nPos+2), $cLen);
+		//this is EVAL response, already run through the parser
 		if ($rData == "DELETED-OK") {
 			$this->setResponse(true);
 		} elseif ($rData == "KEY-NOT-EXIST") {
@@ -51,6 +45,8 @@ class V1 extends Base
 			$this->setException(new \Exception("Key is not type string"));
 		} elseif ($rData == "VALUE-NOT-MATCH") {
 			$this->setException(new \Exception("Value does not match"));
+		} elseif ($rData instanceof \Exception) {
+			$this->setException($rData);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

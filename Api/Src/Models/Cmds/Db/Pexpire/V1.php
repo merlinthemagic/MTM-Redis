@@ -39,12 +39,17 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:(1)\r\n$/si", $rData) === 1) {
-			$this->setResponse(true);
-		} elseif (preg_match("/^\:(0)\r\n$/si", $rData) === 1) {
-			$this->setResponse(false)->setException(new \Exception("Key does not exist: ".$this->getKey()));
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (is_int($rVal) === true) {
+			if ($rVal === 1) {
+				$this->setResponse($rVal);
+			} elseif ($rVal === 0) {
+				$this->setException(new \Exception("Key does not exist: ".$this->getKey()));
+			} else {
+				throw new \Exception("Not handled for return: ".$rData);
+			}
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

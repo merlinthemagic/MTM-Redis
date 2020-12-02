@@ -29,14 +29,19 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (preg_match("/^\:(1)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]));
-		} elseif (preg_match("/^\:(0)\r\n$/si", $rData, $raw) === 1) {
-			$this->setResponse(intval($raw[1]))->setException(new \Exception("Cannot delete, key does not exist"));
-		} elseif (preg_match("/(^\+QUEUED\r\n)$/si", $rData) === 1) {
+		$rVal	= $this->getClient()->parseResponse($rData);
+		if (is_int($rVal) === true) {
+			if ($rVal === 1) {
+				$this->setResponse($rVal);
+			} elseif ($rVal === 0) {
+				$this->setResponse($rVal)->setException(new \Exception("Cannot delete, key does not exist"));
+			} else {
+				throw new \Exception("Not handled for return: ".$rData);
+			}
+		} elseif ($rVal === "QUEUED") {
 			$this->_isQueued	= true;
-		} elseif (strpos($rData, "-ERR") === 0) {
-			$this->setException(new \Exception("Error: ".$rData));
+		} elseif ($rVal instanceof \Exception) {
+			$this->setException($rVal);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

@@ -35,19 +35,15 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
-		if (strpos($rData, "-ERR") === 0) {
-			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
-			return $this;
-		}
-		$nPos	= strpos($rData, "\r\n");
-		$cLen	= intval(substr($rData, 1, ($nPos-1)));
-		$rData	= substr($rData, ($nPos+2), $cLen);
-		if ($rData == "SETDX-OK") {
+		//this is EVAL response, already run through the parser
+		if ($rData === "SETDX-OK") {
 			$this->setResponse(true);
-		} elseif ($rData == "SETDX-FAIL") {
-			$this->setResponse(null)->setException(new \Exception("Key does not exist: ".$this->getString()->getKey()));
-		} elseif ($rData == "SETDX-INVALID") {
-			$this->setResponse(null)->setException(new \Exception("Key is not type string: ".$this->getString()->getKey()));
+		} elseif ($rData === "SETDX-FAIL") {
+			$this->setException(new \Exception("Key does not exist: ".$this->getString()->getKey()));
+		} elseif ($rData === "SETDX-INVALID") {
+			$this->setException(new \Exception("Key is not type string: ".$this->getString()->getKey()));
+		} elseif ($rData instanceof \Exception) {
+			$this->setException($rData);
 		} else {
 			throw new \Exception("Not handled for return: ".$rData);
 		}

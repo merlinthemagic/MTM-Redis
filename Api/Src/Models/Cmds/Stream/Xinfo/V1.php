@@ -18,6 +18,25 @@ class V1 extends Base
 	}
 	public function parse($rData)
 	{
+		$rArr	= $this->getClient()->parseResponse($rData);
+		
+		echo "\n <code><pre> \nClass:  ".get_class($this)." \nMethod:  ".__FUNCTION__. "  \n";
+		//var_dump($_SERVER);
+		echo "\n 2222 \n";
+		print_r($rArr);
+		echo "\n FIX this so it uses the response parser \n";
+		print_r($rData);
+		echo "\n ".time()."</pre></code> \n ";
+		die("end");
+		if ($rVal instanceof \Exception) {
+			$this->setException($rVal);
+		} elseif (is_int($rVal) === true && $rVal === 0) {
+			$this->setException(new \Exception("Id did not exist: ".$this->getId()));
+		} else {
+			$this->setResponse($rVal);
+		}
+		return $this;
+		
 		if (strpos($rData, "-ERR") === 0) {
 			$this->setResponse(false)->setException(new \Exception("Error: ".$rData));
 			return $this;

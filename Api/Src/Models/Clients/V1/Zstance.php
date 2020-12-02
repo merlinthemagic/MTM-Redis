@@ -38,7 +38,7 @@ class Zstance extends Sockets
 	{
 		$reData			= array();
 		$nPos			= strpos($this->_pData, "\r\n");
-		$reSize			= intval(substr($this->_pData, 1, $nPos));
+		$reSize			= intval(substr($this->_pData, 1, ($nPos-1)));
 		$this->_pData	= substr($this->_pData, ($nPos+2));
 		for ($x=0; $x<$reSize; $x++) {
 			$reData[]	= $this->parser();
@@ -48,7 +48,7 @@ class Zstance extends Sockets
 	protected function parseString()
 	{
 		$nPos			= strpos($this->_pData, "\r\n");
-		$reSize			= intval(substr($this->_pData, 1, $nPos));
+		$reSize			= intval(substr($this->_pData, 1, ($nPos-1)));
 		if ($reSize < 0) {
 			$reData			= false;
 			$this->_pData	= substr($this->_pData, ($nPos+2));
@@ -61,7 +61,35 @@ class Zstance extends Sockets
 	protected function parseInteger()
 	{
 		$nPos			= strpos($this->_pData, "\r\n");
-		$reData			= intval(substr($this->_pData, 1, $nPos));
+		$reData			= intval(substr($this->_pData, 1, ($nPos-1)));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		return $reData;
+	}
+	protected function parseAck()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reData			= substr($this->_pData, 1, ($nPos-1));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		return $reData;
+	}
+	protected function parseError()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reData			= new \Exception("Error: ".substr($this->_pData, 4, ($nPos-4)));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		return $reData;
+	}
+	protected function parseErrorType()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reData			= new \Exception("Wrong Type: ".substr($this->_pData, 10, ($nPos-10)));
+		$this->_pData	= substr($this->_pData, ($nPos+2));
+		return $reData;
+	}
+	protected function parseErrorAuth()
+	{
+		$nPos			= strpos($this->_pData, "\r\n");
+		$reData			= new \Exception("Wrong Password: ".substr($this->_pData, 10, ($nPos-10)));
 		$this->_pData	= substr($this->_pData, ($nPos+2));
 		return $reData;
 	}
@@ -73,6 +101,14 @@ class Zstance extends Sockets
 			return $this->parseString();
 		} elseif (strpos($this->_pData, ":") === 0) {
 			return $this->parseInteger();
+		} elseif (strpos($this->_pData, "+") === 0) {
+			return $this->parseAck();
+		} elseif (strpos($this->_pData, "-ERR") === 0) {
+			return $this->parseError();
+		} elseif (strpos($this->_pData, "-WRONGTYPE") === 0) {
+			return $this->parseErrorType();
+		} elseif (strpos($this->_pData, "-WRONGPASS") === 0) {
+			return $this->parseErrorAuth();
 		} else {
 			throw new \Exception("Not handled for response data: ".$this->_pData);
 		}
