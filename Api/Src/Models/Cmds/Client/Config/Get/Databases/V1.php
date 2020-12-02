@@ -19,8 +19,8 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		$arr	= $this->getClient()->parseResponse($rData);
-		if ($rVal instanceof \Exception) {
-			$this->setException($rVal);
+		if ($arr instanceof \Exception) {
+			$this->setException($arr);
 		} elseif ($arr[0] != "databases") {
 			$this->setException(new \Exception("Not handled for return: ".$arr[0]));
 		} elseif (ctype_digit($arr[1]) !== true) {

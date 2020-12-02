@@ -19,8 +19,8 @@ class V1 extends Base
 	public function parse($rData)
 	{
 		$arr	= $this->getClient()->parseResponse($rData);
-		if ($rVal instanceof \Exception) {
-			$this->setException($rVal);
+		if ($arr instanceof \Exception) {
+			$this->setException($arr);
 		} elseif ($arr[0] != "subscribe") {
 			$this->setException(new \Exception("Not handled for return: ".$arr[0]));
 		} elseif ($arr[1] != $this->getChannel()->getName()) {
