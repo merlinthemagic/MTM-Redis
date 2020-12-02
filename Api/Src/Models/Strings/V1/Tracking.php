@@ -10,6 +10,10 @@ abstract class Tracking extends Cmds
 	protected $_updateCbs=array();
 	protected $_delCbs=array();
 	
+	protected $_acquireCmd=null;
+	protected $_releaseCmd=null;
+	protected $_lockExpire=0;
+	
 	public function getData()
 	{
 		if ($this->isTracking() === false) {
@@ -23,6 +27,59 @@ abstract class Tracking extends Cmds
 			$this->refreshCache();
 		}
 		return $this->_exists;
+	}
+	public function isLocked()
+	{
+		if ($this->_lockExpire > \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
+			return true;
+		} else {
+			return false;
+		}
+	}
+	public function acquireLock($timeout=30000, $expire=5000, $poll=true)
+	{
+		if ($this->isLocked() === true) {
+			throw new \Exception("Cannot lock, you already have a lock");
+		}
+		$lockVal	= \MTM\Utilities\Factories::getStrings()->getRandomByRegex(20);
+		if ($this->_acquireCmd === null) {
+			$lockObj			= $this->getDb()->getString(hash("sha256", $this->getKey()."--lock"));
+			$this->_acquireCmd	= $lockObj->setNxPx($lockVal, $expire);
+		} else {
+			$this->_acquireCmd->setValue($lockVal)->setExpire($expire);
+		}
+
+		$tTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
+		while (true) {
+			$cTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
+			$this->_acquireCmd->reset()->exec(false);
+			if ($this->_acquireCmd->getException() === null) {
+				$this->_lockExpire	= $cTime + ($expire / 1000);
+				if ($poll === true) {
+					//lots can have happened since we asked for a lock
+					$this->getClient()->pollSub();
+				}
+				return $this;
+			} elseif ($this->_acquireCmd->getException()->getCode() !== 8865) {
+				throw $this->_acquireCmd->getException(); //other error than lock exists
+			} elseif ($tTime < $cTime) {
+				throw new \Exception("Failed to obtain a lock");
+			}
+		}
+	}
+	public function releaseLock()
+	{
+		if ($this->isLocked() === true) {
+			$lockCmd			= $this->_acquireCmd->getString();
+			if ($this->_releaseCmd === null) {
+				$this->_releaseCmd	= $lockCmd->delMatchValue($this->_acquireCmd->getValue());
+			} else {
+				$this->_releaseCmd->setValue($this->_acquireCmd->getValue());
+			}
+			$this->_releaseCmd->reset()->exec(true);
+			$this->_lockExpire	= 0;
+		}
+		return $this;
 	}
 	public function setData($data)
 	{

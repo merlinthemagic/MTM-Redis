@@ -18,6 +18,9 @@ class V1 extends Base
 	}
 	public function setExpire($value)
 	{
+		if (is_int($value) === false) {
+			throw new \Exception("Input must be integer");
+		}
 		$this->_ms		= $value;
 		return $this;
 	}

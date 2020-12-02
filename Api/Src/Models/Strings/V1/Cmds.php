@@ -32,6 +32,12 @@ abstract class Cmds extends Base
 		$cmdObj->setValue($value);
 		return $cmdObj;
 	}
+	public function setNxPx($value, $ms)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\SetNxPx\V1($this);
+		$cmdObj->setValue($value)->setExpire($ms);
+		return $cmdObj;
+	}
 	public function setDx($value)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\SetDx\V1($this);
@@ -60,5 +66,11 @@ abstract class Cmds extends Base
 		//delete self
 		$this->getDb()->deleteString($this);
 		return $this;
+	}
+	public function delMatchValue($value)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\DelMatchValue\V1($this);
+		$cmdObj->setValue($value);
+		return $cmdObj;
 	}
 }
