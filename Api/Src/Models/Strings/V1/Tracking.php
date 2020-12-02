@@ -180,8 +180,28 @@ abstract class Tracking extends Cmds
 		$cmdObj		= $this->get(); //recaches on its own
 		$data		= $cmdObj->exec(false);
 		if ($cmdObj->getException() === null) {
-			$this->_data	= $data;
-			$this->_exists	= true;
+			
+			if (
+				$data instanceof \stdClass
+				&& $this->_data instanceof \stdClass
+			) {
+				//maintain the referances if user is using objects
+				//makes get methods much easier.
+				//also makes setting data 30% faster for some reason
+				foreach ($this->_data as $prop => $value) {
+					if (property_exists($data, $prop) === false) {
+						unset($this->_data->$prop);
+					}
+				}
+				foreach ($data as $prop => $value) {
+					$this->_data->$prop	= $value;
+				}
+
+			} else {
+				$this->_data	= $data;
+				$this->_exists	= true;
+			}
+			
 		} elseif ($cmdObj->getException()->getCode() == 7554) {
 			$this->_data	= null;
 			$this->_exists	= false;
