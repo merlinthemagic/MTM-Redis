@@ -7,7 +7,8 @@ class Zstance extends Tracking
 	protected $_id=null;
 	protected $_inMulti=false;
 	protected $_sockObj=null;
-
+	protected $_readDelay=5000; //in micro secs
+	
 	public function getId()
 	{
 		return $this->_id;
@@ -39,12 +40,25 @@ class Zstance extends Tracking
 	{
 		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
+		$lLen		= null;
 		while(true) {
 			$data 	= fgets($this->getSocket());
-			if ($data != "") {
+			if ($data !== false) {
 				$rData	.= $data;
 			} elseif ($rData != "") {
-				return $rData;
+				
+				$dLen	= strlen($rData);
+				if ($dLen > 1400 && $lLen !== $dLen) {
+					//intermittent failures when the sender is a bit slower for large payloads
+					//seems 1448 is delivered consistently (max payload in the TCP frame?)
+					//return would get cutoff and read by the next command, havoc
+					$lLen	= $dLen;
+					usleep($this->_readDelay);
+					
+				} else {
+					return $rData;
+				}
+
 			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
 				if ($throw === true) {
 					throw new \Exception("Read command timeout");

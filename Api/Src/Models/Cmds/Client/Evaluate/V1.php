@@ -8,6 +8,7 @@ class V1 extends Base
 	
 	public function setExp($str)
 	{
+		//must start with EVAL
 		$this->_exp	= $str;
 		return $this;
 	}

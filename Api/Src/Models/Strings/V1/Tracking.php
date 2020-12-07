@@ -76,7 +76,11 @@ abstract class Tracking extends Cmds
 			} else {
 				$this->_releaseCmd->setValue($this->_acquireCmd->getValue());
 			}
-			$this->_releaseCmd->reset()->exec(true);
+			
+			$this->_releaseCmd->reset()->exec(false);
+			if ($this->_releaseCmd->getException() !== null) {
+				//we dont really care why it failed, do we?
+			}
 			$this->_lockExpire	= 0;
 		}
 		return $this;
