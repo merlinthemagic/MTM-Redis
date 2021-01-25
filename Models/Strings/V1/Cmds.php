@@ -61,6 +61,11 @@ abstract class Cmds extends Base
 		$cmdObj		= $this->getDb()->expire($this->getKey(), $secs);
 		return $cmdObj;
 	}
+	public function pExpire($secs)
+	{
+		$cmdObj		= $this->getDb()->pExpire($this->getKey(), $secs);
+		return $cmdObj;
+	}
 	public function delete()
 	{
 		//delete self
