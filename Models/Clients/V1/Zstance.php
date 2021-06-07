@@ -29,7 +29,7 @@ class Zstance extends Sockets
 		if ($this->_encoder === "none") {
 			return $data;
 		} elseif ($this->_encoder === "php-serializer") {
-			return @unserialize($data);
+			return unserialize($data);
 		} else {
 			throw new \Exception("Invalid encoder: ". $this->_encoder);
 		}

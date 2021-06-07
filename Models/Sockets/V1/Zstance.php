@@ -27,8 +27,12 @@ class Zstance extends Tracking
 	public function write($strCmd)
 	{
 		$cmdParts	= str_split($strCmd, $this->getClient()->getChunkSize());
+		$sockRes	= $this->getSocket();
+		if (is_resource($sockRes) === false) {
+			throw new \Exception("Cannot write, socket is not a resource");
+		}
 		foreach ($cmdParts as $cmdPart) {
-			$written	= fwrite($this->getSocket(), $cmdPart);
+			$written	= fwrite($sockRes, $cmdPart);
 			if (strlen($cmdPart) != $written) {
 				throw new \Exception("Failed to write command");
 			}
@@ -39,9 +43,12 @@ class Zstance extends Tracking
 	{
 		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
-		$lLen		= null;
+		$sockRes	= $this->getSocket();
+		if (is_resource($sockRes) === false) {
+			throw new \Exception("Cannot read, socket is not a resource");
+		}
 		while(true) {
-			$data 	= fgets($this->getSocket());
+			$data 	= fgets($sockRes);
 			if ($data !== false) {
 				$rData	.= $data;
 			} elseif ($rData != "" && substr($rData, -2) == "\r\n") {
