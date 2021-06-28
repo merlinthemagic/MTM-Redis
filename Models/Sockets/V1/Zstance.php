@@ -33,8 +33,8 @@ class Zstance extends Tracking
 		}
 		foreach ($cmdParts as $cmdPart) {
 			$written	= fwrite($sockRes, $cmdPart);
-			if (strlen($cmdPart) != $written) {
-				throw new \Exception("Failed to write command");
+			if (strlen($cmdPart) !== $written) {
+				throw new \Exception("Failed to write command. Wrote: ".$written.", expected: ".strlen($cmdPart));
 			}
 		}
 		return $this;
