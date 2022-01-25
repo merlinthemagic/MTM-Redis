@@ -41,7 +41,8 @@ class Zstance extends Tracking
 	}
 	public function read($throw=false, $timeout=5000)
 	{
-		$tTime		= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
+		$timeFact	= \MTM\Utilities\Factories::getTime();
+		$tTime		= $timeFact->getMicroEpoch() + ($timeout / 1000);
 		$rData		= "";
 		$sockRes	= $this->getSocket();
 		if (is_resource($sockRes) === false) {
@@ -52,8 +53,27 @@ class Zstance extends Tracking
 			if ($data !== false) {
 				$rData	.= $data;
 			} elseif ($rData != "" && substr($rData, -2) == "\r\n") {
-				return $rData;
-			} elseif ($tTime < \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
+				
+				//check if the first part indicates a string return.
+				//redis writes e.g. $164223\r\n to hint a string is inbound, but may then pause to fetch the full key value
+				//we dont want to return before redis has gotten past the initial stages
+				if (preg_match("/^\\\$([0-9]+)\r\n/", substr($rData, 0, 23), $rLen) === 1) {
+					
+					if (strlen($rData) >= $rLen[1]) {
+						return $rData;
+					} elseif ($tTime < $timeFact->getMicroEpoch()) {
+						if ($throw === true) {
+							throw new \Exception("Partial read. Command timeout");
+						} else {
+							return null;
+						}
+					}
+					
+				} else {
+					return $rData;
+				}
+				
+			} elseif ($tTime < $timeFact->getMicroEpoch()) {
 				if ($throw === true) {
 					throw new \Exception("Read command timeout");
 				} else {
