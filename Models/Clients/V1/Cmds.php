@@ -44,6 +44,12 @@ abstract class Cmds extends Channels
 		$cmdObj->setExp($exp);
 		return $cmdObj;
 	}
+	public function newScript($exp=null)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Client\Script\V1($this);
+		$cmdObj->setExp($exp);
+		return $cmdObj;
+	}
 	public function flushAll($async=false)
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Client\Flush\V1($this);

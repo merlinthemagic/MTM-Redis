@@ -2,7 +2,7 @@
 //© 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Clients\V1;
 
-abstract class Sockets extends Lists
+abstract class Sockets extends Scripts
 {
 	protected $_chMsgCount=0;
 	protected $_mainSockObj=null;

@@ -17,14 +17,20 @@ class V1 extends Base
 	}
 	public function getRawCmd()
 	{
-		$data	= str_replace(array("'"), array("\'"), $this->getClient()->dataEncode($this->getValue()));
-		$strCmd	= "redis.call('select',".$this->getDb()->getId().")";
-		$strCmd	.= " if redis.call('exists','".$this->getString()->getKey()."') == 0 then return 'KEY-NOT-EXIST'";
-		$strCmd	.= " elseif redis.call('type','".$this->getString()->getKey()."').ok ~= 'string' then return 'KEY-NOT-STRING'";
-		$strCmd	.= " elseif redis.call('get','".$this->getString()->getKey()."') ~= '".$data."' then return 'VALUE-NOT-MATCH'";
-		$strCmd	.= " else redis.call('del', '".$this->getString()->getKey()."') return 'DELETED-OK'";
-		$strCmd	.= " end";
-		return $this->getClient()->getRawCmd("EVAL", array($strCmd, 1, 1));
+		$cObj	= $this->getClient();
+		$hash	= "901896440e353affb65b66db5a17e51a95d3173c"; //you must recalculate this if you change the script
+		if ($cObj->isScriptLoaded($hash) === false) {
+			//load the script, use parameterized scripts to avoid cache growing, this because the script hashes to the same every time
+			$strCmd	= "redis.call('select',ARGV[1])";
+			$strCmd	.= " if redis.call('exists',KEYS[1]) == 0 then return 'KEY-NOT-EXIST'";
+			$strCmd	.= " elseif redis.call('type',KEYS[1]).ok ~= 'string' then return 'KEY-NOT-STRING'";
+			$strCmd	.= " elseif redis.call('get',KEYS[1]) ~= ARGV[2] then return 'VALUE-NOT-MATCH'";
+			$strCmd	.= " else redis.call('del', KEYS[1]) return 'DELETED-OK'";
+			$strCmd	.= " end";
+			$cObj->loadScript($strCmd);
+		}
+		$data	= str_replace(array("'"), array("\'"), $cObj->dataEncode($this->getValue()));
+		return $cObj->getRawCmd("EVALSHA", array($hash, 1, $this->getString()->getKey(), $this->getDb()->getId(), $data));
 	}
 	public function exec($throw=false)
 	{
