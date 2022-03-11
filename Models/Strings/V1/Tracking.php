@@ -10,8 +10,12 @@ abstract class Tracking extends Cmds
 	protected $_updateCbs=array();
 	protected $_delCbs=array();
 	
+	protected $_lockObj=null;
 	protected $_acquireCmd=null;
 	protected $_releaseCmd=null;
+	protected $_extendCmd=null;
+	
+	protected $_lockDepth=0;
 	protected $_lockExpire=0;
 	
 	public function getData()
@@ -38,50 +42,75 @@ abstract class Tracking extends Cmds
 	}
 	public function acquireLock($timeout=30000, $expire=5000, $poll=true)
 	{
-		if ($this->isLocked() === true) {
-			throw new \Exception("Cannot lock, you already have a lock");
-		}
-		$lockVal	= \MTM\Utilities\Factories::getStrings()->getRandomByRegex(20);
-		if ($this->_acquireCmd === null) {
-			$lockObj			= $this->getDb()->getString(hash("sha256", $this->getKey()."--lock"));
-			$this->_acquireCmd	= $lockObj->setNxPx($lockVal, $expire);
-		} else {
-			$this->_acquireCmd->setValue($lockVal)->setExpire($expire);
-		}
-
-		$tTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch() + ($timeout / 1000);
-		while (true) {
-			$cTime	= \MTM\Utilities\Factories::getTime()->getMicroEpoch();
-			$this->_acquireCmd->reset()->exec(false);
-			if ($this->_acquireCmd->getException() === null) {
-				$this->_lockExpire	= $cTime + ($expire / 1000);
-				if ($poll === true) {
-					//lots can have happened since we asked for a lock
-					$this->getClient()->pollSub();
-				}
-				return $this;
-			} elseif ($this->_acquireCmd->getException()->getCode() !== 8865) {
-				throw $this->_acquireCmd->getException(); //other error than lock exists
-			} elseif ($tTime < $cTime) {
-				throw new \Exception("Failed to obtain a lock");
+		$timeFact	= \MTM\Utilities\Factories::getTime();
+		if ($this->isLocked() === false) {
+			$this->_lockDepth	= 0;
+			if ($this->_lockObj === null) {
+				$this->_lockObj	= $this->getDb()->getString(hash("sha256", $this->getKey()."--lock"));
 			}
-		}
-	}
-	public function releaseLock()
-	{
-		if ($this->isLocked() === true) {
-			$lockCmd			= $this->_acquireCmd->getString();
-			if ($this->_releaseCmd === null) {
-				$this->_releaseCmd	= $lockCmd->delMatchValue($this->_acquireCmd->getValue());
+			$lockVal	= \MTM\Utilities\Factories::getStrings()->getRandomByRegex(20);
+			if ($this->_acquireCmd === null) {
+				$this->_acquireCmd	= $this->_lockObj->setNxPx($lockVal, $expire);
 			} else {
-				$this->_releaseCmd->setValue($this->_acquireCmd->getValue());
+				$this->_acquireCmd->setValue($lockVal)->setExpire($expire);
 			}
 			
-			$this->_releaseCmd->reset()->exec(false);
-			if ($this->_releaseCmd->getException() !== null) {
-				//we dont really care why it failed, do we?
+			$tTime		= $timeFact->getMicroEpoch() + ($timeout / 1000);
+			while (true) {
+				$cTime	= $timeFact->getMicroEpoch();
+				$this->_acquireCmd->reset()->exec(false);
+				if ($this->_acquireCmd->getException() === null) {
+					$this->_lockExpire	= $cTime + ($expire / 1000);
+					break;
+				} elseif ($this->_acquireCmd->getException()->getCode() !== 8865) {
+					throw $this->_acquireCmd->getException(); //other error than lock exists
+				} elseif ($tTime < $cTime) {
+					throw new \Exception("Failed to obtain a lock");
+				}
 			}
-			$this->_lockExpire	= 0;
+		} else {
+			//extend the lock
+			if ($this->_extendCmd === null) {
+				$this->_extendCmd	= $this->_lockObj->pExpire($expire);
+			} else {
+				$this->_extendCmd->setExpire($expire);
+			}
+			$this->_extendCmd->reset()->exec(true);
+			$this->_lockExpire	= $timeFact->getMicroEpoch() + ($expire / 1000);
+		}
+		$this->_lockDepth++;
+		if ($poll === true) {
+			//lots can have happened since we asked for a lock
+			$this->getClient()->pollSub();
+		}
+		return $this;
+	}
+	public function releaseLock($full=false)
+	{
+		if ($this->isLocked() === true) {
+			if ($this->_lockDepth > 0) {
+				if ($this->_lockDepth === 1 || $full === true) {
+					if ($this->_releaseCmd === null) {
+						$this->_releaseCmd	= $this->_lockObj->delMatchValue($this->_acquireCmd->getValue());
+					} else {
+						$this->_releaseCmd->setValue($this->_acquireCmd->getValue());
+					}
+					
+					$this->_releaseCmd->reset()->exec(false);
+					if ($this->_releaseCmd->getException() !== null) {
+						//we dont really care why it failed, do we?
+					}
+					$this->_lockExpire	= 0;
+				}
+				if ($full === true) {
+					$this->_lockDepth	= 0;
+				} else {
+					$this->_lockDepth--;
+				}
+			}
+			
+		} else {
+			$this->_lockDepth	= 0;
 		}
 		return $this;
 	}

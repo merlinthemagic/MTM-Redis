@@ -89,28 +89,37 @@ class Zstance extends Tracking
 	public function initialize()
 	{
 		if ($this->isInit() === false) {
+			$cliObj		= $this->getClient();
 			
-			if ($this->getClient()->getSslCert() === null) {
-				$strConn	= $this->getClient()->getProtocol()."://".$this->getClient()->getHostname().":".$this->getClient()->getPort()."/";
+			if ($cliObj->getProtocol() === null) {
+				throw new \Exception("Client protocol is not set");
+			} elseif ($cliObj->getHostname() == "") {
+				throw new \Exception("Client hostname is not set");
+			} elseif ($cliObj->getPort() === null) {
+				throw new \Exception("Client port is not set");
+			}
+			
+			if ($cliObj->getSslCert() === null) {
+				$strConn	= $cliObj->getProtocol()."://".$cliObj->getHostname().":".$cliObj->getPort()."/";
 			} else {
 				//steal logic from wsSocket client
 				throw new \Exception("Not yet handled for tls");
 			}
 			
-			$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $this->getClient()->getTimeout(), STREAM_CLIENT_CONNECT);
+			$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT);
 			if (is_resource($sockRes) === false) {
 				throw new \Exception("Socket Error: " . $errstr, $errno);
 			}
 			
 			stream_set_blocking($sockRes, false);
-			stream_set_chunk_size($sockRes, $this->getClient()->getChunkSize());
+			stream_set_chunk_size($sockRes, $cliObj->getChunkSize());
 			
 			$this->_sockObj	= $sockRes;
 			
 			if ($this->getClient()->getAuth() != "") {
 				
 				try {
-					$this->auth($this->getClient()->getAuth())->exec(true);
+					$this->auth($cliObj->getAuth())->exec(true);
 				} catch (\Exception $e) {
 					fclose($this->_sockObj);
 					$this->_sockObj	= null;
