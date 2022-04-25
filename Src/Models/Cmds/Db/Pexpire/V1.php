@@ -44,7 +44,7 @@ class V1 extends Base
 			if ($rVal === 1) {
 				$this->setResponse($rVal);
 			} elseif ($rVal === 0) {
-				$this->setException(new \Exception("Key does not exist: ".$this->getKey()));
+				$this->setException(new \Exception("Pexpire. Key does not exist: ".$this->getKey()));
 			} else {
 				throw new \Exception("Not handled for return: ".$rData);
 			}

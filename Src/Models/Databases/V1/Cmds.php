@@ -29,12 +29,20 @@ abstract class Cmds extends Base
 	}
 	public function expire($key, $secs)
 	{
+		//unless $clientObj->getMainSocket()->setTrackNoLoop(false);
+		//this instance will not be notified when the key expires
+		//NOLOOP https://redis.io/commands/client-tracking/
+		//The timeout will only be cleared by commands that delete or overwrite the contents of the key, including DEL, SET, GETSET
+		//https://redis.io/commands/expire/
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Expire\V1($this);
 		$cmdObj->setKey($key)->setExpire($secs);
 		return $cmdObj;
 	}
 	public function expireAt($key, $epoch)
 	{
+		//unless $clientObj->getMainSocket()->setTrackNoLoop(false);
+		//this instance will not be notified when the key expires
+		//NOLOOP https://redis.io/commands/client-tracking/
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\ExpireAt\V1($this);
 		$cmdObj->setKey($key)->setExpire($epoch);
 		return $cmdObj;
@@ -47,6 +55,11 @@ abstract class Cmds extends Base
 	}
 	public function pExpire($key, $ms)
 	{
+		//unless $clientObj->getMainSocket()->setTrackNoLoop(false);
+		//this instance will not be notified when the key expires
+		//NOLOOP https://redis.io/commands/client-tracking/
+		//The timeout will only be cleared by commands that delete or overwrite the contents of the key, including DEL, SET, GETSET
+		//https://redis.io/commands/expire/
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Db\Pexpire\V1($this);
 		$cmdObj->setKey($key)->setExpire($ms);
 		return $cmdObj;
