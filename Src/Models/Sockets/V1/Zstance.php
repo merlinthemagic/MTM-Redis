@@ -105,15 +105,21 @@ class Zstance extends Tracking
 				//steal logic from wsSocket client
 				throw new \Exception("Not yet handled for tls");
 			}
+	
+			if ($this->_isSub === false) {
+				$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT);
+			} else {
+				//persistant is faster
+				$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
+			}
 			
-			$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT);
 			if (is_resource($sockRes) === false) {
 				throw new \Exception("Socket Error: " . $errstr, $errno);
 			}
 			
 			stream_set_blocking($sockRes, false);
 			stream_set_chunk_size($sockRes, $cliObj->getChunkSize());
-			
+
 			$this->_sockObj	= $sockRes;
 			
 			if ($this->getClient()->getAuth() != "") {

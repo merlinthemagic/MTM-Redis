@@ -5,10 +5,12 @@ namespace MTM\RedisApi\Models\Sockets\V1;
 abstract class Base extends \MTM\RedisApi\Models\Sockets\Base
 {
 	protected $_clientObj=null;
+	protected $_isSub=false;
 	
-	public function __construct($clientObj)
+	public function __construct($clientObj, $isSub=false)
 	{
 		$this->_clientObj	= $clientObj;
+		$this->_isSub		= $isSub;
 		parent::__construct();
 	}
 	public function __destruct()

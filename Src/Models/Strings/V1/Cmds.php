@@ -9,6 +9,11 @@ abstract class Cmds extends Base
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\Get\V1($this);
 		return $cmdObj;
 	}
+	public function exists()
+	{
+		$cmdObj		= $this->getDb()->exists($this->getKey());
+		return $cmdObj;
+	}
 	public function strLen()
 	{
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\StrLen\V1($this);
@@ -26,8 +31,15 @@ abstract class Cmds extends Base
 		$cmdObj->setValue($value);
 		return $cmdObj;
 	}
+	public function setKeepTTL($value=null)
+	{
+		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\SetKeepTTL\V1($this);
+		$cmdObj->setValue($value);
+		return $cmdObj;
+	}
 	public function setNx($value)
 	{
+		//SET if Not eXists
 		$cmdObj		= new \MTM\RedisApi\Models\Cmds\Strings\SetNx\V1($this);
 		$cmdObj->setValue($value);
 		return $cmdObj;
@@ -65,6 +77,11 @@ abstract class Cmds extends Base
 	{
 		$cmdObj		= $this->getDb()->pExpire($this->getKey(), $ms);
 		return $cmdObj;
+	}
+	public function pTtl($throw=false)
+	{
+		//get time to life -1 === no timer
+		return $this->getDb()->pTtl($this->getKey())->exec($throw);
 	}
 	public function delete()
 	{

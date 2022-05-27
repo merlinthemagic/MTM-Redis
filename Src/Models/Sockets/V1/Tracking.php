@@ -12,11 +12,11 @@ abstract class Tracking extends Cmds
 	public function enableTracking()
 	{
 		if ($this->isTracked() === false) {
-			$subSock	= $this->getClient()->getSubSocket();
-			if ($subSock->getId() === $this->getId()) {
+			
+			if ($this->_isSub === true) {
 				throw new \Exception("You cannot enable tracking on the the subscription socket");
 			}
-			
+			$subSock	= $this->getClient()->getSubSocket();
 			$cmdObj		= $this->clientTracking(true)->setRedirectionId($subSock->getId());
 			$cmdObj->setNoLoop($this->getTrackNoLoop())->setMode($this->getTrackMode());
 			foreach ($this->getTrackPrefixes() as $prefix) {

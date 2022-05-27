@@ -37,6 +37,7 @@ abstract class Tracking extends Cmds
 		if ($this->_lockExpire > \MTM\Utilities\Factories::getTime()->getMicroEpoch()) {
 			return true;
 		} else {
+			$this->_lockDepth	= 0;
 			return false;
 		}
 	}
@@ -46,7 +47,7 @@ abstract class Tracking extends Cmds
 		if ($this->isLocked() === false) {
 			$this->_lockDepth	= 0;
 			if ($this->_lockObj === null) {
-				$this->_lockObj	= $this->getDb()->getString(hash("sha256", $this->getKey()."--lock"));
+				$this->_lockObj	= $this->getDb()->getString($this->getKey()."--lock");
 			}
 			$lockVal	= \MTM\Utilities\Factories::getStrings()->getRandomByRegex(20);
 			if ($this->_acquireCmd === null) {
@@ -85,7 +86,7 @@ abstract class Tracking extends Cmds
 		}
 		return $this;
 	}
-	public function releaseLock($full=false)
+	public function releaseLock($full=false, $throw=false)
 	{
 		if ($this->isLocked() === true) {
 			if ($this->_lockDepth > 0) {
@@ -97,8 +98,8 @@ abstract class Tracking extends Cmds
 					}
 					
 					$this->_releaseCmd->reset()->exec(false);
-					if ($this->_releaseCmd->getException() !== null) {
-						//we dont really care why it failed, do we?
+					if ($this->_releaseCmd->getException() !== null && $throw === true) {
+						throw $this->_releaseCmd->getException();
 					}
 					$this->_lockExpire	= 0;
 				}
@@ -110,7 +111,7 @@ abstract class Tracking extends Cmds
 			}
 			
 		} else {
-			$this->_lockDepth	= 0;
+			//will set lock depth 0 on its own
 		}
 		return $this;
 	}
@@ -128,6 +129,16 @@ abstract class Tracking extends Cmds
 	{
 		$this->setNx($data)->exec(false);
 		$this->refreshCache();
+		return $this;
+	}
+	public function setDataKeepTtl($data)
+	{
+		$this->setKeepTTL($data)->exec(true);
+		$cData	= $this->refreshCache();
+		if ($cData !== $data) {
+			//data was replaced right after we set it
+			$this->trackInvalidated();
+		}
 		return $this;
 	}
 	public function setUpdateCb($obj, $method)
