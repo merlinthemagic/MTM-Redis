@@ -24,7 +24,7 @@ abstract class Sockets extends Scripts
 		}
 		return $this->_subSockObj;
 	}
-	public function pollSub()
+	public function pollSub($evObj=null)
 	{
 		$curCount	= $this->_chMsgCount;
 		$this->subSocketRead(false, -1);
@@ -152,7 +152,7 @@ abstract class Sockets extends Scripts
 			//we got a message, but no real data,
 			//this will not end up nesting too deep, pub / sub messages are read many at a time
 			//its only if we trigger a subscribe/unsubscribe and there is a pub pending that we recurse
-			return $this->chanSocketRead($throw, $rTime);
+			return $this->subSocketRead($throw, $rTime);
 		} else {
 			return $rData;
 		}

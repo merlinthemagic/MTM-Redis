@@ -63,6 +63,9 @@ abstract class Tracking extends Cmds
 	}
 	public function setTrackMode($mode="OPTIN")
 	{
+		if (in_array($mode, array("OPTIN", "OPTOUT", "BCAST")) === false) {
+			throw new \Exception("Invalid mode");
+		}
 		$this->_trackMode	= $mode;
 		return $this;
 	}

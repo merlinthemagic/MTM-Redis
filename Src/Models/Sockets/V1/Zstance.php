@@ -90,7 +90,6 @@ class Zstance extends Tracking
 	{
 		if ($this->isInit() === false) {
 			$cliObj		= $this->getClient();
-			
 			if ($cliObj->getProtocol() === null) {
 				throw new \Exception("Client protocol is not set");
 			} elseif ($cliObj->getHostname() == "") {
@@ -106,13 +105,8 @@ class Zstance extends Tracking
 				throw new \Exception("Not yet handled for tls");
 			}
 	
-			if ($this->_isSub === false) {
-				$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT);
-			} else {
-				//persistant is faster
-				$sockRes 		= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT | STREAM_CLIENT_PERSISTENT);
-			}
-			
+			//cannot use persistant clients, the auth sequence gets scred up 
+			$sockRes 	= stream_socket_client($strConn, $errno, $errstr, $cliObj->getTimeout(), STREAM_CLIENT_CONNECT);
 			if (is_resource($sockRes) === false) {
 				throw new \Exception("Socket Error: " . $errstr, $errno);
 			}

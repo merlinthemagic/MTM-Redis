@@ -40,7 +40,7 @@ abstract class Base extends \MTM\RedisApi\Models\Base
 	public function getMessages($count=-1, $timeout=1)
 	{
 		if ($timeout > 0) {
-			$this->getParent()->chanSocketRead(false, $timeout); //fetch new messages
+			$this->getClient()->subSocketRead(false, $timeout); //fetch new messages
 		}
 		$max	= count($this->_msgs); //max count
 		if ($count < 0 || $count > $max) {
