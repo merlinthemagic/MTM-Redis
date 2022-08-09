@@ -11,6 +11,8 @@ class V1 extends Base
 	public function exec($throw=false)
 	{
 		if ($this->isExec() === false) {
+			$this->getClient()->subSocketRead(false); ##here to clean the socket of subscription messages
+			//not sure this will cut it for a busy socket.
 			$this->parse($this->getSocket()->write($this->getRawCmd())->read(true));
 			$this->_isExec	= true;
 		}
