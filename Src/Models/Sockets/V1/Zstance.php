@@ -1,5 +1,5 @@
 <?php
-//© 2020 Martin Peter Madsen
+//ï¿½ 2020 Martin Peter Madsen
 namespace MTM\RedisApi\Models\Sockets\V1;
 
 class Zstance extends Tracking
@@ -7,6 +7,8 @@ class Zstance extends Tracking
 	protected $_id=null;
 	protected $_inMulti=false;
 	protected $_sockObj=null;
+	protected $_readLag=250000; //we want to run fast, but not waste too many cpu cycles
+	protected $_maxReadLag=250000;
 	
 	public function getId()
 	{
@@ -42,8 +44,10 @@ class Zstance extends Tracking
 	public function read($throw=false, $timeout=5000)
 	{
 		$timeFact	= \MTM\Utilities\Factories::getTime();
-		$tTime		= $timeFact->getMicroEpoch() + ($timeout / 1000);
+		$sTime		= $timeFact->getMicroEpoch();
+		$tTime		= $sTime + ($timeout / 1000);
 		$rData		= "";
+		$dCount		= 0;
 		$sockRes	= $this->getSocket();
 		if (is_resource($sockRes) === false) {
 			throw new \Exception("Cannot read, socket is not a resource");
@@ -52,6 +56,7 @@ class Zstance extends Tracking
 			$data 	= fgets($sockRes);
 			if ($data !== false) {
 				$rData	.= $data;
+				$dCount++;
 			} elseif ($rData != "" && substr($rData, -2) == "\r\n") {
 				
 				//check if the first part indicates a string return.
@@ -60,7 +65,15 @@ class Zstance extends Tracking
 				if (preg_match("/^\\\$([0-9]+)\r\n/", substr($rData, 0, 23), $rLen) === 1) {
 					
 					if (strlen($rData) >= $rLen[1]) {
+						
+						//adjust the lag to reflect how long this took to handle
+						//this will avg out the round trip time to the redis server over time
+						$this->_readLag		= intval(($this->_readLag + (((($timeFact->getMicroEpoch() - $sTime)*1000000)) / $dCount)) / 2);
+						if ($this->_readLag > $this->_maxReadLag) {
+							$this->_readLag		= $this->_maxReadLag;
+						}
 						return $rData;
+						
 					} elseif ($tTime < $timeFact->getMicroEpoch()) {
 						if ($throw === true) {
 							throw new \Exception("Partial read. Command timeout");
@@ -79,6 +92,8 @@ class Zstance extends Tracking
 				} else {
 					return null;
 				}
+			} else {
+				usleep($this->_readLag);
 			}
 		}
 	}
